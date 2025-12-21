@@ -24,7 +24,7 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES':
         (
-            "rest_framework_simplejwt.authentication.JWTAuthentication",
+            "Users.services.token_cache.CacheJWTAuthentication",
         ),
     'DEFAULT_RENDERER_CLASSES':
         (
@@ -39,8 +39,9 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.AnonRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'user': '5/min',
-        'anon': '5/min',
+        'user': '10000/day',
+        'anon': '1000/day',
+        'custom': '5/minute',
     }
 }
 
@@ -151,3 +152,18 @@ AUTH_USER_MODEL = 'Users.CustomUser'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# --- Email credentials from ENV ---
+EMAIL_HOST = config('EMAIL_HOST', default='test.com')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='test@example.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='password')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='test@example.com')
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_TIMEOUT = 15
+
+# --- SMS Panel credentials from ENV ---
+SMS_API_URL = config('SMS_API_URL', default='')
+SMS_API_KEY = config('SMS_API_KEY', default='')
+SMS_SENDER = config('SMS_SENDER', default='')
+SMS_PATTERN = config('SMS_PATTERN', default='')

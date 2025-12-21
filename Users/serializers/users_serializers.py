@@ -3,6 +3,7 @@ from django.db import transaction
 from rest_framework import serializers
 from Users.models.users_models import CustomUser, OTP
 from rest_framework_simplejwt.tokens import RefreshToken
+from Users.utils.identifier import username_identifier
 
 
 class OTPGeneratorSerializer(serializers.Serializer):
@@ -11,15 +12,15 @@ class OTPGeneratorSerializer(serializers.Serializer):
         username = attrs['username'].strip()
 
         if not username:
-            raise serializers.ValidationError({"username":"Either phone or email must be set."})
+            raise serializers.ValidationError({"Username":"Either phone or email must be set."})
 
-        if "@" in username:
-            attrs['email'] = username.lower()
-            attrs['phone'] = None
-        else:
-            attrs['phone'] = username.replace(" ", "").replace("+","").replace("-","")
-            attrs['email'] = None
+        identifiers = username_identifier(username)
+
+        attrs["email"] = identifiers["email"]
+        attrs["phone"] = identifiers["phone"]
+
         return attrs
+
 
     def create(self, validated_data):
         phone = validated_data['phone']

@@ -18,3 +18,4 @@ gunicorn
 django-cors-headers
 django-unfold
 pillow
+requests
