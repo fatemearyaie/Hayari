@@ -19,6 +19,7 @@ class CustomUser(AbstractBaseUser,PermissionsMixin):
     total_score = models.PositiveIntegerField(default=0)
     month_score = models.PositiveIntegerField(default=0)
     balance = models.DecimalField(max_digits=9, decimal_places=0, default=0)
+    description = models.TextField(null=True, blank=True)
 
     date_joined = models.DateField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

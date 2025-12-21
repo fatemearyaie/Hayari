@@ -101,6 +101,7 @@ class OTPVerifySerializer(serializers.Serializer):
 
 
 
-
-
-
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'name', 'phone', 'email', 'image','description']

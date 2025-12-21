@@ -20,7 +20,7 @@ class CacheJWTAuthentication(JWTAuthentication):
             return user
         try:
             user = super().get_user(validated_token)
-        except user.DoesNotExist:
+        except User.DoesNotExist:
             raise AuthenticationFailed("User not found")
         cache.set(key, user)
         return user

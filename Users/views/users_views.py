@@ -1,11 +1,11 @@
 from django.shortcuts import render
-from rest_framework import status
+from rest_framework import status, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from Users.tasks import send_otp_sms, send_otp_email
-from Users.serializers.users_serializers import OTPGeneratorSerializer, OTPVerifySerializer
+from Users.serializers.users_serializers import OTPGeneratorSerializer, OTPVerifySerializer, UserProfileSerializer
 from Users.utils.identifier import username_identifier
-
+from rest_framework.views import APIView
 
 class OTPGeneratorView(APIView):
     throttle_scope = 'custom'
@@ -31,7 +31,20 @@ class OTPGeneratorView(APIView):
 class OTPVerifyView(APIView):
     throttle_scope = 'custom'
     def post(self, request):
-        serializer = OTPVerifySerializer(data=request.data)
+        serializer = OTPVerifySerializer(data=request.user)
         serializer.is_valid(raise_exception=True)
         result = serializer.save()
         return Response(result)
+
+class UserProfileView(APIView):
+    throttle_scope = 'user'
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
