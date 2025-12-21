@@ -5,6 +5,7 @@ from Users.models.transactions_models import Transaction
 from Users.serializers.transactions_serializers import TransactionSerializer
 
 class TransactionView(viewsets.ReadOnlyModelViewSet):
+    throttle_scope = 'custom'
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
