@@ -10,8 +10,8 @@ from Hayari.settings.base import DEFAULT_FROM_EMAIL
 from smtplib import SMTPConnectError, SMTPServerDisconnected, SMTPDataError
 import socket
 
-
-RETRY_EXC = (socket.timeout, SMTPConnectError, SMTPServerDisconnected, SMTPDataError, OSError)
+RETRY_EXC_SMS=(socket.timeout,requests.Timeout,requests.ConnectionError,requests.HTTPError,OSError,)
+RETRY_EXC=(socket.timeout, SMTPConnectError, SMTPServerDisconnected, SMTPDataError, OSError)
 
 
 
@@ -40,22 +40,31 @@ def send_otp_email(self, email_addr: str, otp_code: str):
 
 
 
-@shared_task(bind=True, name="users.send_otp_pattern")
-def send_otp_sms(self, phone, otp):
-    headers = {'Content-Type': 'application/json', 'Authorization': SMS_API_KEY}
+
+@shared_task(
+    bind=True,
+    name="users.send_otp_sms",
+    autoretry_for=RETRY_EXC_SMS,
+    retry_backoff=5,
+    retry_backoff_max=120,
+    retry_jitter=True,
+    max_retries=6,
+)
+def send_otp_sms(self, phone: str, otp: str):
+    headers = {"Content-Type": "application/json", "Authorization": SMS_API_KEY}
     body = {
         "sending_type": "pattern",
         "recipients": [phone],
         "from_number": SMS_SENDER,
         "code": SMS_PATTERN,
-        "params": {"code": otp}
+        "params": {"code": str(otp)},
     }
+
     r = requests.post(SMS_API_URL, headers=headers, json=body, timeout=15)
-
-    try:
-        print("SMS json:", r.json())
-    except Exception:
-        pass
-
     r.raise_for_status()
-    return r.text
+    data = r.json()
+
+    if not data.get("meta", {}).get("status", False):
+        raise RuntimeError(f"SMS provider returned status=false: {data}")
+
+    return data
