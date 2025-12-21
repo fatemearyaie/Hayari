@@ -19,3 +19,4 @@ django-cors-headers
 django-unfold
 pillow
 requests
+django_filter
