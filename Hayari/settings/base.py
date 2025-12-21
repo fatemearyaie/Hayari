@@ -167,3 +167,7 @@ SMS_API_URL = config('SMS_API_URL', default='')
 SMS_API_KEY = config('SMS_API_KEY', default='')
 SMS_SENDER = config('SMS_SENDER', default='')
 SMS_PATTERN = config('SMS_PATTERN', default='')
+
+
+MERCHANT = config('MERCHANT')
+SANDBOX = True
