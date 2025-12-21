@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
-from Users.models.users_models import CustomUser, OTP
+from Users.models.users_models import CustomUser, OTP, City
 from rest_framework_simplejwt.tokens import RefreshToken
 from Users.utils.identifier import username_identifier
 
@@ -105,3 +105,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['username', 'name', 'phone', 'email', 'image','description']
+
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        fields = ['name']

@@ -2,8 +2,11 @@ from django.shortcuts import render
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from Users.services.city_cache import get_cached_cities
 from Users.tasks import send_otp_sms, send_otp_email
-from Users.serializers.users_serializers import OTPGeneratorSerializer, OTPVerifySerializer, UserProfileSerializer
+from Users.serializers.users_serializers import OTPGeneratorSerializer, OTPVerifySerializer, UserProfileSerializer, \
+    CitySerializer
 from Users.utils.identifier import username_identifier
 from rest_framework.views import APIView
 
@@ -48,3 +51,9 @@ class UserProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CityView(APIView):
+    throttle_scope = 'custom'
+    def get(self, request):
+        cities = get_cached_cities()
+        return Response(cities)

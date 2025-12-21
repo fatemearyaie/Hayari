@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from Users.views.transactions_views import TransactionView, PaymentViewSet
-from Users.views.users_views import OTPGeneratorView, OTPVerifyView, UserProfileView
+from Users.views.users_views import OTPGeneratorView, OTPVerifyView, UserProfileView, CityView
 
 router = DefaultRouter()
 router.register(r'zarinpal', PaymentViewSet, basename='zarinpal')
@@ -13,5 +13,7 @@ urlpatterns =[
     path('profile/', UserProfileView.as_view(), name='profile'),
     path('auth/', OTPGeneratorView.as_view(), name='auth'),
     path('auth/register/', OTPVerifyView.as_view(), name='auth-register'),
+    path('cities/', CityView.as_view(), name='city-list'),
+
 ]
 urlpatterns += router.urls
