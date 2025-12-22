@@ -40,7 +40,7 @@ class FundRaising(models.Model):
 
 class FundImage(models.Model):
     image = models.ImageField(upload_to='product/')
-    Fund = models.ForeignKey(FundRaising, models.CASCADE, related_name='image_product')
+    Fund = models.ForeignKey(FundRaising, models.CASCADE)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

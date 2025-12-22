@@ -3,10 +3,14 @@ from unfold.admin import ModelAdmin
 
 from Funds.models import FundRaising, FundImage, Donor
 
+class FundImageInline(admin.TabularInline):
+    model = FundImage
+    extra = 1
+    fields = ['image', 'Fund']
 
-# Register your models here.
 @admin.register(FundRaising)
 class FundRaisingAdmin(ModelAdmin):
+    inlines = [FundImageInline]
     list_display = ['title','total_amount','current_donation','is_available','website']
     list_filter = ['start_date','end_date','is_available','total_amount','current_donation']
     search_fields = ['is_available','start_date','end_date', 'total_amount', 'title','current_donation']
