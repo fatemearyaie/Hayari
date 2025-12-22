@@ -1,8 +1,8 @@
 from datetime import timedelta
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
-from django.db import models
-from django.db.models import Q
+from django.db import models, transaction
+from django.db.models import Q, F
 from django.utils import timezone
 from Users.utils.managers import CustomUserManager
 from django.utils.translation import gettext_lazy as _
@@ -146,3 +146,45 @@ class City(models.Model):
         ]
     def __str__(self):
         return self.name
+
+
+
+class XPTracker(models.Model):
+    class Reason(models.TextChoices):
+        Ads = 'ads','ads'
+        lottery = 'lottery','lottery'
+        donation = 'donation','donation'
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    xp = models.PositiveIntegerField(default=0, null=True, blank=True)
+    total_xp_after = models.PositiveIntegerField(default=0)
+    month_xp_after = models.PositiveIntegerField(default=0)
+    reason = models.CharField(choices=Reason, default=Reason.Ads)
+    datetime_created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'XPTracker'
+        verbose_name_plural = 'XPTrackers'
+
+        indexes = [
+            models.Index(fields=['xp'], name='xp_idx'),
+            models.Index(fields=['total_xp_after'], name='total_xp_after_idx'),
+            models.Index(fields=['month_xp_after'], name='month_xp_after_idx'),
+            models.Index(fields=['reason'], name='reason_idx'),
+            models.Index(fields=['datetime_created'], name='datetime_created_idx'),
+        ]
+
+    def __str__(self):
+        return str(self.xp)
+
+    def save(self, *args, **kwargs):
+        xp_delta = int(self.xp or 0)
+
+        with transaction.atomic():
+            user = CustomUser.objects.select_for_update().get(pk=self.user_id)
+            CustomUser.objects.filter(pk=user.pk).update(total_score=F("total_score") + xp_delta,
+                                                             month_score=F("month_score") + xp_delta)
+            user.refresh_from_db(fields=['total_score','month_score'])
+            self.total_xp_after = user.total_score
+            self.month_xp_after = user.total_score
+
+            super().save(*args, **kwargs)
