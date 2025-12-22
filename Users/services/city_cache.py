@@ -9,7 +9,7 @@ CACHE_KEY = "city:all"
 def get_cached_cities():
     data = cache.get(CACHE_KEY)
     if data is None:
-        cities = City.objects.all()
-        data = CitySerializer(cities, many=True).data
+        qs = City.objects.filter(is_available=True).only("id", "name")
+        data = CitySerializer(qs, many=True).data
         cache.set(CACHE_KEY, data, CITIES_CACHE_TTL)
     return data

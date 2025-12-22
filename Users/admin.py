@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from Users.models import XPTracker
+from Users.models.banner_models import Banner
 from Users.models.transactions_models import Transaction
 from Users.models.users_models import CustomUser, City, Country, OTP
 from unfold.admin import ModelAdmin
@@ -41,3 +43,15 @@ class transactionAdmin(ModelAdmin):
     list_display = ['user', 'transaction_type','transaction_status','payment_gateway','amount','balance_after','tracking_code']
     search_fields = ['tracking_code','transaction_status', 'transaction_type']
     list_filter = ['transaction_type','transaction_status','payment_gateway']
+
+@admin.register(Banner)
+class BannerAdmin(ModelAdmin):
+    list_display = ['title','url','is_active']
+    list_filter = ['is_active']
+    search_fields = ['title']
+
+@admin.register(XPTracker)
+class XPTrackerAdmin(ModelAdmin):
+    list_display = ['user', 'xp','reason','month_xp_after','datetime_created']
+    list_filter = ['reason']
+    search_fields = ['reason', 'datetime_created']
