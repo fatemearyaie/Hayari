@@ -4,7 +4,7 @@ from Funds.views.funds_views import FundRaisingView, DonateView
 
 router = DefaultRouter()
 router.register(r'fundraisings', FundRaisingView, basename='fundraising')
-router.register(r'donate',DonateView, basename='donate')
+router.register(r'donation',DonateView, basename='donate')
 urlpatterns = [
 ]
 urlpatterns += router.urls
