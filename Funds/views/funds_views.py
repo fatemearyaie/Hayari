@@ -11,7 +11,7 @@ from rest_framework.decorators import action
 
 from Funds.models.funds_models import FundRaising, Donor
 from Funds.serializers.funds_serializers import FundRaisingSerializer, FundRaisingDetailSerializer, DonateSerializer, \
-    DonorSerializer
+    DonorSerializer, MyDonorSerializer
 from Users.models.users_models import XPTracker, CustomUser
 from Users.models.transactions_models import Transaction
 
@@ -103,6 +103,6 @@ class DonateView(viewsets.ViewSet):
         queryset = filters.SearchFilter().filter_queryset(request, queryset, self)
         queryset = filters.OrderingFilter().filter_queryset(request, queryset, self)
 
-        serializer = DonorSerializer(queryset, many=True)
+        serializer = MyDonorSerializer(queryset, many=True)
         return Response(serializer.data)
 

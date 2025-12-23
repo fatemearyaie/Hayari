@@ -34,3 +34,10 @@ class DonorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Donor
         fields = ['user','amount','place','datetime','xp']
+
+class MyDonorSerializer(serializers.ModelSerializer):
+    fundraising = FundRaisingSerializer()
+    user = UserProfileSerializer()
+    class Meta:
+        model = Donor
+        fields = ['fundraising','user','amount','place','datetime','xp']
