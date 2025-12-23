@@ -52,27 +52,22 @@ class FundImage(models.Model):
         return str(self.pk)
 
 class Donor(models.Model):
+    fundraising = models.ForeignKey(FundRaising, on_delete=models.CASCADE, null=True)
+
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=12,decimal_places=0, null=False, blank=False)
     place = models.PositiveIntegerField(editable=False)
     datetime = models.DateTimeField(auto_now_add=True)
     xp = models.PositiveIntegerField(default=0)
 
-
-
     def save(self, *args, **kwargs):
-        if self.pk is None and not self.place:
+        if not self.pk:
             with transaction.atomic():
-                with connection.cursor() as cursor:
-                    cursor.execute("SELECT pg_advisory_xact_lock(%s);", [987654321])
-
-                last_place = (Donor.objects.order_by('-place').values_list('place', flat=True).first())
-                self.place = (last_place or 0) + 1
-                super().save(*args,**kwargs)
-
-            return
-        super().save(*args, **kwargs)
-
+                last_donor = Donor.objects.filter(fundraising=self.fundraising).order_by('-place').first()
+                self.place = (last_donor.place + 1) if last_donor else 1
+                super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Donor'
