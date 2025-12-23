@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from Funds.models import Donor
 from Funds.models.funds_models import FundRaising, FundImage
 from Users.serializers.users_serializers import CitySerializer
 
@@ -22,3 +24,9 @@ class FundRaisingDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = FundRaising
         fields = ['title','current_donation','city','each_don_xp','images','description','total_amount','start_date','end_date','latitude','longitude','website']
+
+
+class DonateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Donor
+        fields = ['amount']

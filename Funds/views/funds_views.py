@@ -1,10 +1,18 @@
+from django.db.models import Sum
+from django.utils import timezone
+from datetime import timedelta
+from django.db import transaction
 from django.shortcuts import render, get_object_or_404
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from Funds.models.funds_models import FundRaising
-from Funds.serializers.funds_serializers import FundRaisingSerializer, FundRaisingDetailSerializer
+from rest_framework.decorators import action
 
+from Funds.models.funds_models import FundRaising, Donor
+from Funds.serializers.funds_serializers import FundRaisingSerializer, FundRaisingDetailSerializer, DonateSerializer
+from Users.models.users_models import XPTracker, CustomUser
+from Users.models.transactions_models import Transaction
 
 # Create your views here.
 class FundRaisingView(viewsets.ViewSet):
@@ -26,3 +34,46 @@ class FundRaisingView(viewsets.ViewSet):
         fundraising = get_object_or_404(queryset, pk=pk)
         serializer = FundRaisingDetailSerializer(fundraising, context={'request': request})
         return Response(serializer.data)
+
+class DonateView(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+    @action(detail=True, methods=['post'])
+    def donate(self, request, pk=None):
+        serializer = DonateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        fundraising = get_object_or_404(FundRaising, pk=pk)
+        amount = serializer.validated_data['amount']
+
+        if not fundraising.is_available:
+            return Response({'this fundraising is not available anymore'})
+
+        with transaction.atomic():
+            user = CustomUser.objects.select_for_update().get(pk=request.user.pk)
+
+            if user.balance <= amount:
+                return Response({'Balance':"Insufficient balance"}, status=status.HTTP_400_BAD_REQUEST)
+
+            Donor.objects.create(
+                user=user,
+                amount=amount,
+                xp=fundraising.each_don_xp,
+                fundraising=fundraising
+            )
+
+            Transaction.objects.create(
+                user=user,
+                transaction_type=Transaction.TransactionType.Withdraw,
+                transaction_status=Transaction.TransactionStatus.COMPLETE,
+                payment_gateway=Transaction.PaymentGateWay.app,
+                amount=amount,
+            )
+
+
+            XPTracker.objects.create(
+                user=user,
+                xp=fundraising.each_don_xp,
+                reason = XPTracker.Reason.donation,
+            )
+        return Response({'status': 'Donation successful'}, status=status.HTTP_200_OK)
+
