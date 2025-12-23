@@ -154,6 +154,7 @@ class XPTracker(models.Model):
         Ads = 'ads','ads'
         lottery = 'lottery','lottery'
         donation = 'donation','donation'
+
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     xp = models.PositiveIntegerField(default=0, null=True, blank=True)
     total_xp_after = models.PositiveIntegerField(default=0)
@@ -175,16 +176,3 @@ class XPTracker(models.Model):
 
     def __str__(self):
         return str(self.xp)
-
-    def save(self, *args, **kwargs):
-        xp_delta = int(self.xp or 0)
-
-        with transaction.atomic():
-            user = CustomUser.objects.select_for_update().get(pk=self.user_id)
-            CustomUser.objects.filter(pk=user.pk).update(total_score=F("total_score") + xp_delta,
-                                                             month_score=F("month_score") + xp_delta)
-            user.refresh_from_db(fields=['total_score','month_score'])
-            self.total_xp_after = user.total_score
-            self.month_xp_after = user.total_score
-
-            super().save(*args, **kwargs)
