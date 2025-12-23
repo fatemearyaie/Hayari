@@ -34,7 +34,7 @@ class OTPGeneratorView(APIView):
 class OTPVerifyView(APIView):
     throttle_scope = 'custom'
     def post(self, request):
-        serializer = OTPVerifySerializer(data=request.user)
+        serializer = OTPVerifySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         result = serializer.save()
         return Response(result)

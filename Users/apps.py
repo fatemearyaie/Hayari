@@ -6,4 +6,6 @@ class UsersConfig(AppConfig):
 
     def ready(self):
         import Users.signals.cache_signals
+        import Users.signals.transactions_signals
+        import Users.signals.xp_singals
 
