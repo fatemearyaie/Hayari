@@ -17,6 +17,7 @@ from Users.models.transactions_models import Transaction
 
 # Create your views here.
 class FundRaisingView(viewsets.ViewSet):
+    throttle_scope = 'custom'
     filterset_fields = ['title', 'current_donation', 'city', 'each_don_xp', 'start_date']
     search_fields = ['title', 'start_date', 'city']
     ordering_fields = ['title', 'start_date']
@@ -41,6 +42,7 @@ class FundRaisingView(viewsets.ViewSet):
 
 
 class DonateView(viewsets.ViewSet):
+    throttle_scope = 'custom'
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['place', 'amount', 'datetime']

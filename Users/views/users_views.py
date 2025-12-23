@@ -11,7 +11,7 @@ from Users.utils.identifier import username_identifier
 from rest_framework.views import APIView
 
 class OTPGeneratorView(APIView):
-    throttle_scope = 'custom'
+    throttle_scope = 'user'
     def post(self, request):
         serializer = OTPGeneratorSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
