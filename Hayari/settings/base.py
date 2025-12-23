@@ -19,7 +19,8 @@ INSTALLED_APPS = [
     'rest_framework',
 
     'Users',
-    'Funds'
+    'Funds',
+    'Ads'
 ]
 
 REST_FRAMEWORK = {
