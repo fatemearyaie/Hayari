@@ -1,7 +1,9 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from Funds.models import Donor
 from Funds.models.funds_models import FundRaising, FundImage
+from Users.models import CustomUser, Transaction, XPTracker
 from Users.serializers.users_serializers import CitySerializer, UserProfileSerializer
 
 
@@ -29,13 +31,42 @@ class DonateSerializer(serializers.ModelSerializer):
         model = Donor
         fields = ['amount']
 
+    def validate(self, attrs):
+        amount = attrs['amount']
+        user = self.context['request'].user
+        fundraising = self.context["fundraising"]
+
+        if not fundraising.is_available:
+            return serializers.ValidationError({"detail": "this fundraising is not available anymore"})
+        if user.balance <= amount:
+            return serializers.ValidationError({"detail": "Insufficient balance"})
+
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        user = request.user
+        fundraising = self.context["fundraising"]
+        amount = validated_data["amount"]
+
+        with transaction.atomic():
+            user = CustomUser.objects.select_for_update().get(pk=user.pk)
+
+            donor = Donor.objects.create(
+                user=user,
+                amount=amount,
+                xp=fundraising.each_don_xp,
+                fundraising=fundraising,)
+
+        return donor
+
 class DonorSerializer(serializers.ModelSerializer):
     user = UserProfileSerializer()
     class Meta:
         model = Donor
         fields = ['user','amount','place','datetime','xp']
 
-class MyDonorSerializer(serializers.ModelSerializer):
+class MyDonoationSerializer(serializers.ModelSerializer):
     fundraising = FundRaisingSerializer()
     user = UserProfileSerializer()
     class Meta:

@@ -3,7 +3,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
 from django.shortcuts import render, get_object_or_404
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters, status, mixins
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,100 +11,71 @@ from rest_framework.decorators import action
 
 from Funds.models.funds_models import FundRaising, Donor
 from Funds.serializers.funds_serializers import FundRaisingSerializer, FundRaisingDetailSerializer, DonateSerializer, \
-    DonorSerializer, MyDonorSerializer
+    DonorSerializer, MyDonoationSerializer
 from Users.models.users_models import XPTracker, CustomUser
 from Users.models.transactions_models import Transaction
 
 # Create your views here.
-class FundRaisingView(viewsets.ViewSet):
-    throttle_scope = 'custom'
+class FundRaisingGV(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
+    throttle_scope = "custom"
+
+    queryset = FundRaising.objects.all().select_related('city').prefetch_related('fundimage_set')
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+
     filterset_fields = ['title', 'current_donation', 'city', 'each_don_xp', 'start_date']
     search_fields = ['title', 'start_date', 'city']
     ordering_fields = ['title', 'start_date']
     ordering = ['title', 'start_date']
 
-    def list(self, request):
-        queryset = FundRaising.objects.all().select_related('city').prefetch_related('fundimage_set')
-
-        queryset = DjangoFilterBackend().filter_queryset(request, queryset, self)
-        queryset = filters.SearchFilter().filter_queryset(request, queryset, self)
-        queryset = filters.OrderingFilter().filter_queryset(request, queryset, self)
-
-        serializer = FundRaisingSerializer(queryset, many=True, context={'request': request})
-        return Response(serializer.data)
-
-    def retrieve(self, request, pk=None):
-        queryset = FundRaising.objects.all()
-        fundraising = get_object_or_404(queryset, pk=pk)
-        serializer = FundRaisingDetailSerializer(fundraising, context={'request': request})
-        return Response(serializer.data)
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return FundRaisingDetailSerializer
+        return FundRaisingSerializer
 
 
-
-class DonateView(viewsets.ViewSet):
-    throttle_scope = 'custom'
+class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
+    throttle_scope = "custom"
     permission_classes = [IsAuthenticated]
+
+    serializer_class = DonorSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['place', 'amount', 'datetime']
-    ordering_fields = ['title', 'start_date']
-    ordering = ['place', 'datetime', 'amount']
-    @action(detail=True, methods=['post'])
-    def donate(self, request, pk=None):
-        serializer = DonateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
-        fundraising = get_object_or_404(FundRaising, pk=pk)
-        amount = serializer.validated_data['amount']
+    search_fields = ["amount", "datetime"]
+    ordering_fields = ["datetime", "amount"]
+    ordering = ["-datetime"]
 
-        if not fundraising.is_available:
-            return Response({'this fundraising is not available anymore'})
-
-        with transaction.atomic():
-            user = CustomUser.objects.select_for_update().get(pk=request.user.pk)
-
-            if user.balance <= amount:
-                return Response({'Balance':"Insufficient balance"}, status=status.HTTP_400_BAD_REQUEST)
-
-            Donor.objects.create(
-                user=user,
-                amount=amount,
-                xp=fundraising.each_don_xp,
-                fundraising=fundraising
-            )
-
-            Transaction.objects.create(
-                user=user,
-                transaction_type=Transaction.TransactionType.Withdraw,
-                transaction_status=Transaction.TransactionStatus.COMPLETE,
-                payment_gateway=Transaction.PaymentGateWay.app,
-                amount=amount,
-            )
-
-
-            XPTracker.objects.create(
-                user=user,
-                xp=fundraising.each_don_xp,
-                reason = XPTracker.Reason.donation,
-            )
-        return Response({'status': 'Donation successful'}, status=status.HTTP_200_OK)
-    def retrieve(self, request, pk=None):
-        fundraising = get_object_or_404(FundRaising, pk=pk)
-        queryset = Donor.objects.filter(fundraising=fundraising).select_related('user').order_by('-datetime')
+    @action(detail=True, methods=["get"], url_path="donors")
+    def donors(self, request, pk=None):
+        queryset = (
+            Donor.objects
+            .filter(fundraising_id=pk)
+            .select_related("user")
+            .order_by("-datetime")
+        )
 
         queryset = DjangoFilterBackend().filter_queryset(request, queryset, self)
         queryset = filters.SearchFilter().filter_queryset(request, queryset, self)
         queryset = filters.OrderingFilter().filter_queryset(request, queryset, self)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = DonorSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = DonorSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    def list(self, request):
-        queryset = Donor.objects.filter(user=request.user).select_related('fundraising').order_by('-datetime')
-
-        queryset = DjangoFilterBackend().filter_queryset(request, queryset, self)
-        queryset = filters.SearchFilter().filter_queryset(request, queryset, self)
-        queryset = filters.OrderingFilter().filter_queryset(request, queryset, self)
-
-        serializer = MyDonorSerializer(queryset, many=True)
-        return Response(serializer.data)
-
+    @action(detail=True, methods=["post"], url_path="donate")
+    def donate(self, request, pk=None):
+        fundraising = get_object_or_404(FundRaising, pk=pk)
+        serializer = DonateSerializer(data=request.data,context={
+            "request": request,
+            "fundraising": fundraising,
+        },)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"status": "Donation successful"}, status=status.HTTP_200_OK)
