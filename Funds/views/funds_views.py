@@ -10,17 +10,19 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 
 from Funds.models.funds_models import FundRaising, Donor
-from Funds.serializers.funds_serializers import FundRaisingSerializer, FundRaisingDetailSerializer, DonateSerializer
+from Funds.serializers.funds_serializers import FundRaisingSerializer, FundRaisingDetailSerializer, DonateSerializer, \
+    DonorSerializer
 from Users.models.users_models import XPTracker, CustomUser
 from Users.models.transactions_models import Transaction
 
 # Create your views here.
 class FundRaisingView(viewsets.ViewSet):
-    filterset_fields = ['title', 'current_donation', 'city', 'each_don_xp', 'start_date']
-    search_fields = ['title', 'start_date', 'city']
-    ordering_fields = ['title', 'start_date']
-    ordering = ['title', 'start_date']
+
     def list(self, request):
+        self.filterset_fields = ['title', 'current_donation', 'city', 'each_don_xp', 'start_date']
+        self.search_fields = ['title', 'start_date', 'city']
+        self.ordering_fields = ['title', 'start_date']
+
         queryset = FundRaising.objects.all().select_related('city').prefetch_related('fundimage_set')
         queryset = DjangoFilterBackend().filter_queryset(request, queryset, self)
         queryset = filters.SearchFilter().filter_queryset(request, queryset, self)
@@ -34,6 +36,24 @@ class FundRaisingView(viewsets.ViewSet):
         fundraising = get_object_or_404(queryset, pk=pk)
         serializer = FundRaisingDetailSerializer(fundraising, context={'request': request})
         return Response(serializer.data)
+
+
+    @action(detail=True, methods=['get'])
+    def donors(self, request, pk=None):
+        fundraising = get_object_or_404(FundRaising, pk=pk)
+        queryset = Donor.objects.filter(fundraising=fundraising).select_related('user').order_by('-datetime')
+
+        self.filterset_fields = ['amount', 'place', 'xp', 'datetime']
+        self.search_fields = ['user__username', 'user__phone']
+        self.ordering_fields = ['amount', 'datetime']
+
+        queryset = DjangoFilterBackend().filter_queryset(request, queryset, self)
+        queryset = filters.SearchFilter().filter_queryset(request, queryset, self)
+        queryset = filters.OrderingFilter().filter_queryset(request, queryset, self)
+
+        serializer = DonorSerializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class DonateView(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]

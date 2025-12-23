@@ -53,7 +53,6 @@ class FundImage(models.Model):
 
 class Donor(models.Model):
     fundraising = models.ForeignKey(FundRaising, on_delete=models.CASCADE, null=True)
-
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=12,decimal_places=0, null=False, blank=False)
     place = models.PositiveIntegerField(editable=False)
