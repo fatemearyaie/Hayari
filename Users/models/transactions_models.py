@@ -15,6 +15,7 @@ class Transaction(models.Model):
     class PaymentGateWay(models.TextChoices):
         Zarrinpal = 'zarrinpal','zarrinpal'
         PayPal = 'paypal', 'paypal'
+        app = 'app', 'app'
     class Currency(models.TextChoices):
         Dollar = 'dollar', 'dollar'
         IRR = 'IRR', 'IRR'

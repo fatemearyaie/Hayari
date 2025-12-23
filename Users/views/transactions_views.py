@@ -149,12 +149,8 @@ class PaymentViewSet(viewsets.ViewSet):
         if code in (100,101):
             try:
                 with db_transaction.atomic():
-                    user = CustomUser.objects.select_for_update().get(id=transaction.user_id)
-                    user.balance += transaction.amount
-                    user.save()
-
                     transaction.transaction_status = Transaction.TransactionStatus.COMPLETE
-                    transaction.transaction_type = Transaction.TransactionType.Withdraw
+                    transaction.transaction_type = Transaction.TransactionType.Deposit
                     transaction.save()
 
                 context = {
