@@ -42,6 +42,10 @@ class FundRaisingView(viewsets.ViewSet):
 
 class DonateView(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['place', 'amount', 'datetime']
+    ordering_fields = ['title', 'start_date']
+    ordering = ['place', 'datetime', 'amount']
     @action(detail=True, methods=['post'])
     def donate(self, request, pk=None):
         serializer = DonateSerializer(data=request.data)
@@ -85,10 +89,15 @@ class DonateView(viewsets.ViewSet):
         fundraising = get_object_or_404(FundRaising, pk=pk)
         queryset = Donor.objects.filter(fundraising=fundraising).select_related('user').order_by('-datetime')
 
-        self.filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-        self.search_fields = ['place', 'amount', 'datetime']
-        self.ordering_fields = ['title', 'start_date']
-        self.ordering = ['place', 'datetime', 'amount']
+        queryset = DjangoFilterBackend().filter_queryset(request, queryset, self)
+        queryset = filters.SearchFilter().filter_queryset(request, queryset, self)
+        queryset = filters.OrderingFilter().filter_queryset(request, queryset, self)
+
+        serializer = DonorSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def list(self, request):
+        queryset = Donor.objects.filter(user=request.user).select_related('fundraising').order_by('-datetime')
 
         queryset = DjangoFilterBackend().filter_queryset(request, queryset, self)
         queryset = filters.SearchFilter().filter_queryset(request, queryset, self)
