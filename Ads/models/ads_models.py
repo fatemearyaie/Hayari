@@ -44,8 +44,6 @@ class AdCategory(models.Model):
         indexes = [
             models.Index(fields=['name'], name='ad_category_idx'),
         ]
-    def __str__(self):
-        return self.name
 
 class Advertisement(models.Model):
     class AdStatus(models.TextChoices):

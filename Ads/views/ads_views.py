@@ -54,7 +54,22 @@ class AdvertisementViewSet(ModelViewSet):
 
 
     def get_queryset(self):
-        return Advertisement.objects.filter(user=self.request.user).order_by('-created_at')
+        return Advertisement.objects.filter(user=self.request.user).order_by('-created_at').select_related('user','category','city')
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed('DELETE')
+
+class AllAdvertisementViewSet(ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AdvertisementReadSerializer
+
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter, ]
+    filterset_fields = ['category','created_at','city']
+    search_fields = ['title','category','city']
+    ordering_fields = ['created_at', 'title','city']
+    ordering = ['created_at']
+
+    def get_queryset(self):
+        return Advertisement.objects.filter(status=Advertisement.AdStatus.Enable).order_by('-created_at').select_related('city','user','category')
+
+

@@ -3,6 +3,7 @@ from unicodedata import category
 
 from Ads.models.ads_models import AdSetting, Advertisement, AdCategory
 from Users.models import City
+from Users.serializers.users_serializers import CitySerializer
 
 
 class AdSettingSerializer(serializers.ModelSerializer):
@@ -51,8 +52,8 @@ class CreateAdvertisementSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class UpdateAdvertisementSerializer(serializers.ModelSerializer):
-    city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all())
-    category = serializers.PrimaryKeyRelatedField(queryset=AdCategory.objects.all())
+    city = CitySerializer()
+    category = AdCategorySerializer()
 
     class Meta:
         model = Advertisement
@@ -71,15 +72,12 @@ class UpdateAdvertisementSerializer(serializers.ModelSerializer):
                 {'duplicate': 'You already created an ad with the same city/category/title.'})
 
         return attrs
+
 class AdvertisementReadSerializer(serializers.ModelSerializer):
-    city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all())
-    category = serializers.PrimaryKeyRelatedField(queryset=AdCategory.objects.all())
+    city = CitySerializer()
+    category = AdCategorySerializer()
 
     class Meta:
         model = Advertisement
-        fields = ['city', 'category', 'title', 'image', 'video', 'website','status',
-            'total_view',
-            'total_click',
-            'created_at',
-            'updated_at',]
+        fields = ['city', 'category', 'title', 'image', 'video', 'website','status','total_view','total_click','created_at','updated_at',]
 
