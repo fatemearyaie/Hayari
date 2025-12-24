@@ -1,8 +1,8 @@
 from rest_framework.routers import DefaultRouter
-from Ads.views.ads_views import AdSettingView, AdCategoryView
+from Ads.views.ads_views import AdSettingViewSet, AdCategoryViewSet,AdvertisementViewSet
 
 router = DefaultRouter()
-router.register(r'ad/settings', AdSettingView, basename='ad-setting')
-router.register(r'ad/category', AdCategoryView, basename='ad-category')
-
+router.register(r'settings', AdSettingViewSet, basename='ad-setting')
+router.register(r'category', AdCategoryViewSet, basename='ad-category')
+router.register(r'advertisement', AdvertisementViewSet, basename='advertisement')
 urlpatterns = router.urls

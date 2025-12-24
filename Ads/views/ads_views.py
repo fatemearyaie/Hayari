@@ -1,16 +1,18 @@
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from Ads.models.ads_models import AdSetting, AdCategory
-from Ads.serializers.ads_serializers import AdSettingSerializer, AdCategorySerializer
+from Ads.models.ads_models import AdSetting, AdCategory, Advertisement
+from Ads.serializers.ads_serializers import AdSettingSerializer, AdCategorySerializer, CreateAdvertisementSerializer, \
+    UpdateAdvertisementSerializer, AdvertisementReadSerializer
 
 
 # Create your views here.
 
-class AdSettingView(ReadOnlyModelViewSet):
+class AdSettingViewSet(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = AdSettingSerializer
 
@@ -25,7 +27,7 @@ class AdSettingView(ReadOnlyModelViewSet):
         return (AdSetting.objects.filter(is_available=True))
 
 
-class AdCategoryView(ReadOnlyModelViewSet):
+class AdCategoryViewSet(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = AdCategorySerializer
 
@@ -37,3 +39,22 @@ class AdCategoryView(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return (AdCategory.objects.filter(is_available=True))
+
+class AdvertisementViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+
+    def get_serializer_class(self):
+        if self.action == 'create':  # POST
+            return CreateAdvertisementSerializer
+
+        if self.action in ['update', 'partial_update']:  # PUT / PATCH
+            return UpdateAdvertisementSerializer
+        return AdvertisementReadSerializer
+
+
+    def get_queryset(self):
+        return Advertisement.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed('DELETE')
