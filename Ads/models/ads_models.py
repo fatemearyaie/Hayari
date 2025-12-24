@@ -29,6 +29,7 @@ class AdSetting(models.Model):
         super().save(*args, **kwargs)
 
 
+
 class AdCategory(models.Model):
     name = models.CharField(max_length=25)
     is_available = models.BooleanField(default=True)
@@ -43,6 +44,8 @@ class AdCategory(models.Model):
         indexes = [
             models.Index(fields=['name'], name='ad_category_idx'),
         ]
+    def __str__(self):
+        return self.name
 
 class Advertisement(models.Model):
     class AdStatus(models.TextChoices):
@@ -73,6 +76,8 @@ class Advertisement(models.Model):
             models.Index(fields=['total_view'], name='Ad_total_view_idx'),
             models.Index(fields=['total_click'], name='Ad_total_click_idx')
         ]
+    def __str__(self):
+        return self.title
 
 
 
@@ -94,4 +99,7 @@ class AdEvent(models.Model):
         indexes = [
             models.Index(fields=['event_type'], name='event_type_idx'),
         ]
+
+    def __str__(self):
+        return str(self.pk)
 
