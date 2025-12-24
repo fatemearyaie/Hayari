@@ -1,7 +1,5 @@
 from rest_framework import serializers
-from unicodedata import category
-
-from Ads.models.ads_models import AdSetting, Advertisement, AdCategory
+from Ads.models.ads_models import AdSetting, Advertisement, AdCategory, AdEvent
 from Users.models import City
 from Users.serializers.users_serializers import CitySerializer
 
@@ -73,11 +71,46 @@ class UpdateAdvertisementSerializer(serializers.ModelSerializer):
 
         return attrs
 
-class AdvertisementReadSerializer(serializers.ModelSerializer):
+class MyAdvertisementSerializer(serializers.ModelSerializer):
     city = CitySerializer()
     category = AdCategorySerializer()
 
     class Meta:
         model = Advertisement
         fields = ['city', 'category', 'title', 'image', 'video', 'website','status','total_view','total_click','created_at','updated_at',]
+class AdvertisementReadSerializer(serializers.ModelSerializer):
+    city = CitySerializer()
+    category = AdCategorySerializer()
 
+    class Meta:
+        model = Advertisement
+        fields = ['city', 'category', 'title', 'image', 'video', 'website']
+
+
+class AdEventSerializer(serializers.ModelSerializer):
+    ad = AdvertisementReadSerializer(read_only=True)
+    class Meta:
+        model = AdEvent
+        fields = ['event_type','ad']
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        ad = self.context.get('ad')
+
+        if not request or not request.user or not request.user.is_authenticated:
+            raise serializers.ValidationError('Authentication required.')
+
+        if ad is None:
+            raise serializers.ValidationError('Ad is required in serializer context.')
+
+        attrs['user'] = request.user
+        attrs['ad'] = ad
+        return attrs
+
+    def create(self, validated_data):
+        event, created = AdEvent.objects.get_or_create(
+            user=validated_data['user'],
+            ad=validated_data['ad'],
+            defaults={'event_type': validated_data['event_type']}
+        )
+        return event

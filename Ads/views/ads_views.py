@@ -1,13 +1,17 @@
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from Ads.models.ads_models import AdSetting, AdCategory, Advertisement
 from Ads.serializers.ads_serializers import AdSettingSerializer, AdCategorySerializer, CreateAdvertisementSerializer, \
-    UpdateAdvertisementSerializer, AdvertisementReadSerializer
+    UpdateAdvertisementSerializer, AdvertisementReadSerializer, MyAdvertisementSerializer, AdEventSerializer
 
 
 # Create your views here.
@@ -40,9 +44,9 @@ class AdCategoryViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         return (AdCategory.objects.filter(is_available=True))
 
+
 class AdvertisementViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
-
 
     def get_serializer_class(self):
         if self.action == 'create':  # POST
@@ -50,14 +54,31 @@ class AdvertisementViewSet(ModelViewSet):
 
         if self.action in ['update', 'partial_update']:  # PUT / PATCH
             return UpdateAdvertisementSerializer
-        return AdvertisementReadSerializer
-
+        return MyAdvertisementSerializer
 
     def get_queryset(self):
         return Advertisement.objects.filter(user=self.request.user).order_by('-created_at').select_related('user','category','city')
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed('DELETE')
+
+    @action(detail=True, methods=['post'], url_path='event')
+    def event(self, request, pk=None):
+        ad = get_object_or_404(
+            Advertisement.objects.select_related('category', 'city'),
+            pk=pk,
+            status=Advertisement.AdStatus.Enable
+        )
+
+        serializer = AdEventSerializer(
+            data=request.data,
+            context={'request': request, 'ad': ad}
+        )
+        serializer.is_valid(raise_exception=True)
+        event_obj = serializer.save()
+
+        return Response(AdEventSerializer(event_obj).data)
+
 
 class AllAdvertisementViewSet(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
