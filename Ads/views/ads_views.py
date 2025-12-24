@@ -4,8 +4,10 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from Ads.models.ads_models import AdSetting
-from Ads.serializers.ads_serializers import AdSettingSerializer
+from Ads.models.ads_models import AdSetting, AdCategory
+from Ads.serializers.ads_serializers import AdSettingSerializer, AdCategorySerializer
+
+
 # Create your views here.
 
 class AdSettingView(ReadOnlyModelViewSet):
@@ -21,3 +23,17 @@ class AdSettingView(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return (AdSetting.objects.filter(is_available=True))
+
+
+class AdCategoryView(ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AdCategorySerializer
+
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter, ]
+    filterset_fields = ['is_available']
+    search_fields = ['name']
+    ordering_fields = ['name','created_at']
+    ordering = ['name']
+
+    def get_queryset(self):
+        return (AdCategory.objects.filter(is_available=True))
