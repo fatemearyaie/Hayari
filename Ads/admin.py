@@ -28,7 +28,6 @@ class AdvertisementAdmin(ModelAdmin):
     search_fields = ["title", "website", "user__username", "user__email", "user__phone"]
     list_filter = ["status", "city", "category", "created_at", "updated_at"]
     ordering = ["-created_at"]
-    raw_id_fields = ["user", "city", "category"]
 
 
 @admin.register(AdEvent)
