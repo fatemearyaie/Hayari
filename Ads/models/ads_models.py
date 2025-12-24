@@ -23,6 +23,11 @@ class AdSetting(models.Model):
             models.Index(fields=['banner_xp'], name='setting_banner_xp_idx'),
         ]
 
+    def save(self, *args, **kwargs):
+        if self.is_available:
+            AdSetting.objects.filter(is_available=True).update(is_available=False)
+        super().save(*args, **kwargs)
+
 
 class AdCategory(models.Model):
     name = models.CharField(max_length=25)
