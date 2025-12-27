@@ -48,6 +48,23 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
     ordering_fields = ["datetime", "amount"]
     ordering = ["-datetime"]
 
+    def list(self, request, *args, **kwargs):
+        queryset = (
+            Donor.objects
+            .filter(user=request.user)
+            .select_related("fundraising")
+            .order_by("-datetime")
+        )
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = MyDonoationSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = MyDonoationSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
     @action(detail=True, methods=["get"], url_path="donors")
     def donors(self, request, pk=None):
         def compute():
