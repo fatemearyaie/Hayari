@@ -28,7 +28,7 @@ class UserNotificationViewSet(viewsets.ReadOnlyModelViewSet):
         if not notification.is_read:
             notification.is_read = True
             notification.save(update_fields=['is_read'])
-        return Response({'one notification read'},status=status.HTTP_200_OK)
+        return Response('one notification read',status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'])
     def unread_count(self, request):
