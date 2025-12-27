@@ -20,3 +20,4 @@ django-unfold
 pillow
 requests
 django_filter
+firebase-admin

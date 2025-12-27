@@ -6,6 +6,8 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+FIREBASE_SERVICE_ACCOUNT_PATH = config("FIREBASE_SERVICE_ACCOUNT_PATH")
+
 
 INSTALLED_APPS = [
     'unfold',

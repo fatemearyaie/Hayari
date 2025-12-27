@@ -30,3 +30,7 @@ db.sqlite3
 
 # logs
 logs/
+
+secrets/
+*.json
+hayari-firebase.json

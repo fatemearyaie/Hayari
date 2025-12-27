@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
-
+from Notification.services.send_notification import send_notification
 from Funds.models.funds_models import FundRaising, Donor
 from Funds.serializers.funds_serializers import FundRaisingSerializer, FundRaisingDetailSerializer, DonateSerializer, \
     DonorSerializer, MyDonoationSerializer
@@ -78,4 +78,5 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
         },)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        send_notification(user=request.user, message_type='donation_success')
         return Response({"status": "Donation successful"}, status=status.HTTP_200_OK)
