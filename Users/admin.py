@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from Users.models import XPTracker
-from Users.models.banner_models import Banner
+from Users.models.banner_models import Banner,Version, LoginEntry, HomeBanner
 from Users.models.transactions_models import Transaction
 from Users.models.users_models import CustomUser, City, Country, OTP
 from unfold.admin import ModelAdmin
@@ -55,3 +55,48 @@ class XPTrackerAdmin(ModelAdmin):
     list_display = ['user', 'xp','reason','month_xp_after','datetime_created']
     list_filter = ['reason']
     search_fields = ['reason', 'datetime_created']
+
+
+
+@admin.register(Version)
+class VersionAdmin(admin.ModelAdmin):
+    list_display = (
+        'version_number',
+        'title',
+        'is_force',
+        'force_min_version',
+    )
+    list_filter = ('is_force',)
+    search_fields = ('title', 'description')
+    ordering = ('-version_number',)
+    list_editable = ('is_force', 'force_min_version')
+    fieldsets = (
+        ('Version Info', {
+            'fields': ('version_number', 'title', 'description')
+        }),
+        ('Force Update Settings', {
+            'fields': ('is_force', 'force_min_version'),
+        }),
+    )
+
+
+@admin.register(LoginEntry)
+class LoginEntryAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'created_at',
+    )
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'user__email', 'user__phone')
+    ordering = ('-created_at',)
+
+
+@admin.register(HomeBanner)
+class HomeBannerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'short_message')
+    search_fields = ('message',)
+
+    def short_message(self, obj):
+        return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
+
+    short_message.short_description = 'Message Preview'
