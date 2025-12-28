@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
@@ -24,3 +25,11 @@ class HomeBannerView(APIView):
             )
         serializer = HomeBannerSerializer(banner)
         return Response(serializer.data)
+
+
+
+class SplashView(APIView):
+    def get(self, request):
+        if not request.user or not request.user.is_authenticated:
+            return Response('you are not authenticate',status=status.HTTP_403_FORBIDDEN)
+        return Response('welcome!',status=status.HTTP_200_OK)
