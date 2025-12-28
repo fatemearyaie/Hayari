@@ -19,7 +19,7 @@ services:
     networks:
       - hayari-network
     extra_hosts:
-      - "host.docker.internal:172.17.0.1"
+      - "host.docker.internal:host-gateway"
     command: >
       gunicorn Hayari.asgi:application
           -k uvicorn.workers.UvicornWorker
@@ -46,7 +46,7 @@ services:
     networks:
       - hayari-network
     extra_hosts:
-      - "host.docker.internal:172.17.0.1"
+      - "host.docker.internal:host-gateway"
 
   celery-beat:
     build: .
@@ -60,6 +60,8 @@ services:
       - .:/app
     depends_on:
       - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 
   redis:
@@ -75,6 +77,8 @@ services:
       --appendonly yes
       --maxmemory 512mb
       --maxmemory-policy allkeys-lru
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   hayari-network:

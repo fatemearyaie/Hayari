@@ -1,22 +1,26 @@
 #!/usr/bin/env sh
 set -e
 
-export PGPASSWORD=$POSTGRES_PASSWORD
+echo "DB ENV:"
+echo "POSTGRES_HOST=${POSTGRES_HOST}"
+echo "POSTGRES_PORT=${POSTGRES_PORT}"
+echo "POSTGRES_DB=${POSTGRES_DB}"
+echo "POSTGRES_USER=${POSTGRES_USER}"
 
-# wait for database to be ready
-until psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q'; do
+export PGPASSWORD="${POSTGRES_PASSWORD}"
+
+# Wait for Postgres on host
+until psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c '\q' >/dev/null 2>&1; do
   echo "Waiting for Postgres..."
   sleep 2
 done
 
-echo "Postgres is ready. Running migrations..."
+echo "Postgres is ready."
 
-if [ "$RUN_MIGRATIONS" = "1" ]; then
-  echo "Running Django migrations..."
-  python manage.py makemigrations
+if [ "${RUN_MIGRATIONS}" = "1" ]; then
+  echo "Running migrations..."
   python manage.py migrate --noinput
-  python manage.py createcachetable
+  python manage.py createcachetable || true
 fi
 
-# this command is for finishing the entrypointfile/NECCESSARY
 exec "$@"
