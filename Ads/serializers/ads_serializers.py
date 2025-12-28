@@ -114,5 +114,5 @@ class AdEventSerializer(serializers.ModelSerializer):
             defaults={'event_type': validated_data['event_type']}
         )
         if not created:
-            raise serializers.ValidationError("you can not change your action to this ad")
+            raise serializers.ValidationError("you can not change your action to this ad, or set action twice!")
         return event
