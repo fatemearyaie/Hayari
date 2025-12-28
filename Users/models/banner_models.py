@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils import timezone
+
 from Users.models import CustomUser
 
 
@@ -47,6 +49,7 @@ class LoginEntry(models.Model):
 class HomeBanner(models.Model):
     banner = models.ImageField(upload_to='banners/home')
     message = models.TextField(null=False, blank=False)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         verbose_name = 'HomeBanner'
