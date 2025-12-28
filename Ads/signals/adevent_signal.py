@@ -10,11 +10,14 @@ def create_xptracker_on_ad_event(sender, instance: AdEvent, created: bool, **kwa
     if not created:
         return
 
+    if instance.event_type != AdEvent.EventType.View:
+        return
+
     with transaction.atomic():
         already_rewarded = AdEvent.objects.filter(
             user_id=instance.user_id,
             ad_id=instance.ad_id,
-        ).exclude(pk=instance.pk).exists()
+        ).exclude(pk=instance.pk).exists() #exclude current event
 
         if already_rewarded:
             return

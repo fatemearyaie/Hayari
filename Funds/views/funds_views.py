@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
@@ -13,7 +13,7 @@ from Funds.services.list_cache import cached_list, bump_version
 from Notification.services.send_notification import send_notification
 from Funds.models.funds_models import FundRaising, Donor
 from Funds.serializers.funds_serializers import FundRaisingSerializer, FundRaisingDetailSerializer, DonateSerializer, \
-    DonorSerializer, MyDonoationSerializer
+    DonorSerializer, MyDonoationSerializer, MyDonationAnalyticsSerializer
 from Users.models.users_models import XPTracker, CustomUser
 from Users.models.transactions_models import Transaction
 
@@ -112,3 +112,20 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
             {"status": "Donation successful"},
             status=status.HTTP_200_OK
         )
+
+class MyDonationAnayticsView(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+    def list(self, request):
+        qs = Donor.objects.filter(user=request.user).aggregate(
+            count=Count('id'),
+            total_amount=Sum('amount')
+        )
+        payload = {
+            "count": qs.get("count") or 0,
+            "total_amount": qs.get("total_amount") or 0,
+        }
+
+        serializer = MyDonationAnalyticsSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(serializer.validated_data)

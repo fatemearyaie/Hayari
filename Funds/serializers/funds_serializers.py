@@ -71,3 +71,8 @@ class MyDonoationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Donor
         fields = ['fundraising','user','amount','place','datetime','xp']
+
+
+class MyDonationAnalyticsSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    total_amount = serializers.IntegerField()
