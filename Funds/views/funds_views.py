@@ -114,6 +114,7 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
         )
 
 class MyDonationAnayticsView(viewsets.ViewSet):
+    throttle_scope = 'custom'
     permission_classes = [IsAuthenticated]
     def list(self, request):
         qs = Donor.objects.filter(user=request.user).aggregate(

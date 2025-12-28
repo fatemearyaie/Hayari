@@ -1,9 +1,10 @@
+from django.db import transaction
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 
-from Users.models.banner_models import HomeBanner
+from Users.models.banner_models import HomeBanner, LoginEntry
 from Users.serializers.banner_serializers import HomeBannerSerializer
 from Users.services.banner_cache import get_cached_banners
 
@@ -29,7 +30,7 @@ class HomeBannerView(APIView):
 
 
 class SplashView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
-        if not request.user or not request.user.is_authenticated:
-            return Response('you are not authenticate',status=status.HTTP_403_FORBIDDEN)
+        LoginEntry.objects.create(user_id=request.user.id)
         return Response('welcome!',status=status.HTTP_200_OK)
