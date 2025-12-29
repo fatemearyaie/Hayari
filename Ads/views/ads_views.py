@@ -7,6 +7,7 @@ from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from Ads.models.ads_models import AdSetting, AdCategory, Advertisement
@@ -16,24 +17,26 @@ from Ads.serializers.ads_serializers import AdSettingSerializer, AdCategorySeria
 
 # Create your views here.
 
-class AdSettingViewSet(ReadOnlyModelViewSet):
+
+class AdSettingViewAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = AdSettingSerializer
 
+    def get(self, request):
+        setting = AdSetting.objects.filter(is_available=True)
+        if not setting:
+            return Response(
+                {"detail": "Ad setting not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-    filter_backends = [DjangoFilterBackend,SearchFilter,OrderingFilter,]
-    filterset_fields = ['is_available']
-    search_fields = ['video_xp', 'banner_xp']
-    ordering_fields = ['video_price', 'banner_price', 'created_at']
-    ordering = ['-created_at']
-
-    def get_queryset(self):
-        return (AdSetting.objects.filter(is_available=True))
+        serializer = AdSettingSerializer(setting)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class AdCategoryViewSet(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = AdCategorySerializer
+    pagination_class = None
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter, ]
     filterset_fields = ['is_available']

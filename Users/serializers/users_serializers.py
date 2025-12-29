@@ -104,10 +104,14 @@ class OTPVerifySerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['username', 'name', 'phone', 'email', 'image','description']
+        fields = ['username', 'name', 'phone', 'email', 'image','description', 'balance','total_score','month_score']
+class OtherUserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['name','image','description']
 
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
-        fields = ['name']
+        fields = ['name','id']
 

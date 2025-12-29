@@ -3,13 +3,13 @@ from rest_framework import serializers
 from Funds.models import Donor
 from Funds.models.funds_models import FundRaising, FundImage
 from Users.models import CustomUser, Transaction, XPTracker
-from Users.serializers.users_serializers import CitySerializer, UserProfileSerializer
+from Users.serializers.users_serializers import CitySerializer, UserProfileSerializer, OtherUserProfileSerializer
 
 
 class FundImagesSerializer(serializers.ModelSerializer):
     class Meta:
         model = FundImage
-        fields = ['image']
+        fields = ['image','id']
 
 class FundRaisingSerializer(serializers.ModelSerializer):
     city = CitySerializer()
@@ -60,7 +60,7 @@ class DonateSerializer(serializers.ModelSerializer):
         return donor
 
 class DonorSerializer(serializers.ModelSerializer):
-    user = UserProfileSerializer()
+    user = OtherUserProfileSerializer()
     class Meta:
         model = Donor
         fields = ['user','amount','place','datetime','xp']

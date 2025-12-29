@@ -15,7 +15,7 @@ from django.db import transaction as db_transaction
 ZP_API_REQUEST = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
 ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
-CallbackURL = 'http://localhost:8000/api/v1/users/zarinpal/verify/'
+CallbackURL = 'http://api.hayari.app/api/v1/users/zarinpal/verify/'
 
 class TransactionView(viewsets.ModelViewSet):
     throttle_scope = 'custom'
@@ -44,9 +44,8 @@ class PaymentViewSet(viewsets.ViewSet):
             amount = amount,
             transaction_status = Transaction.TransactionStatus.PENDING,
         )
-        internal_url = request.build_absolute_uri(
-            f"/api/v1/users/zarinpal/{transaction.id}/request/"
-        )
+
+        internal_url = f"https://api.hayari.app/api/v1/users/zarinpal/{transaction.id}/request/"
         return Response({
             "transaction_id": transaction.id,
             "amount": transaction.amount,

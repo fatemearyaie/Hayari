@@ -1,12 +1,6 @@
 #!/usr/bin/env sh
 set -e
 
-echo "DB ENV:"
-echo "POSTGRES_HOST=${POSTGRES_HOST}"
-echo "POSTGRES_PORT=${POSTGRES_PORT}"
-echo "POSTGRES_DB=${POSTGRES_DB}"
-echo "POSTGRES_USER=${POSTGRES_USER}"
-
 export PGPASSWORD="${POSTGRES_PASSWORD}"
 
 # Wait for Postgres on host
@@ -19,6 +13,7 @@ echo "Postgres is ready."
 
 if [ "${RUN_MIGRATIONS}" = "1" ]; then
   echo "Running migrations..."
+  python manage.py makemigrations
   python manage.py migrate --noinput
   python manage.py createcachetable || true
 fi

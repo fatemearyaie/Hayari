@@ -12,7 +12,7 @@ class AdSettingSerializer(serializers.ModelSerializer):
 class AdCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = AdCategory
-        fields = ['name']
+        fields = ['name','id']
 
 class CreateAdvertisementSerializer(serializers.ModelSerializer):
     city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all())
