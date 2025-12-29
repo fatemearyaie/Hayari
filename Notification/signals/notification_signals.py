@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save,pre_save
 from django.dispatch import receiver
 from Notification.models.notification_models import UserNotification, UserFCMToken
-from Notification.services.send_notification import send_firebase
+from Notification.tasks import send_firebase_task
 from django.db import transaction
 
 
@@ -34,4 +34,4 @@ def send_fcm_on_notification_created(sender, instance: UserNotification, created
         "message": str(instance.description or ""),
         "fcm": str(fcm_obj.token),
     }
-    send_firebase(data)
+    send_firebase_task.delay(data)

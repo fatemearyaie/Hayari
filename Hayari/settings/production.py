@@ -6,6 +6,9 @@ from corsheaders.defaults import default_headers
 ALLOWED_HOSTS=['46.249.101.76','api.hayari.app','localhost','127.0.0.1','0.0.0.0']
 
 
+DEBUG = config("DEBUG")
+SECRET_KEY = config("SECRET_KEY")
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -21,7 +24,7 @@ DATABASES = {
 
 CORS_ALLOW_ALL_ORIGINS = False
 CSRF_TRUSTED_ORIGINS = [
-    'https://hayari.ir',
-    'https://api.hayari.ir',
+    'https://hayari.app',
+    'https://api.hayari.app',
 ]
 CORS_ALLOW_HEADERS = list(default_headers) + ['x-csrftoken']

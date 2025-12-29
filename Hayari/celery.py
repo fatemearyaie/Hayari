@@ -6,3 +6,4 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hayari.settings")
 app = Celery("hayari")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
+
