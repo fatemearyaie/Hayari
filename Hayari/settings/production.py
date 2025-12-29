@@ -3,7 +3,7 @@ from decouple import config
 from .base import *
 from corsheaders.defaults import default_headers
 
-ALLOWED_HOSTS=['46.249.101.76','api.hayari.app','localhost','127.0.0.1','0.0.0.0']
+ALLOWED_HOSTS=['46.249.101.76','api.hayari.app','hayari.app','localhost','127.0.0.1','0.0.0.0']
 
 
 DEBUG = config("DEBUG")

@@ -8,6 +8,41 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 FIREBASE_SERVICE_ACCOUNT_PATH = config("FIREBASE_SERVICE_ACCOUNT_PATH")
 
+# --- Logging ---
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "default": {
+            "format": "[{asctime}] {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        "file": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "hayari_errors.log",
+            "formatter": "default",
+        },
+        "console": {
+            "level": "WARNING",
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        },
+    },
+
+    "root": {
+        "handlers": ["file", "console"],
+        "level": "WARNING",
+    },
+}
+
 
 INSTALLED_APPS = [
     'unfold',
