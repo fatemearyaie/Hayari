@@ -9,15 +9,29 @@ class ActiveLotterySerializer(serializers.ModelSerializer):
         fields = ['name','description','lottery_datetime']
         
 
+class LotteryMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lottery
+        fields = ("id", "name", "lottery_datetime")
+
+
 class LotteryRewardSerializer(serializers.ModelSerializer):
-    user = OtherUserProfileSerializer()
-    lottery = ActiveLotterySerializer(read_only=True)
+    user = OtherUserProfileSerializer(read_only=True)
+
     class Meta:
         model = LotteryRewards
-        fields = ("lottery","user","place","amount",)
+        fields = ("place", "amount", "user")
+
 
 class LotteryWinnersSerializer(serializers.ModelSerializer):
     winners = LotteryRewardSerializer(source="lotteryrewards_set", many=True, read_only=True)
+
     class Meta:
         model = Lottery
-        fields = ("name","lottery_datetime","winners",)
+        fields = ("name", "lottery_datetime", "winners")
+
+
+class LastLotteryUserStatusSerializer(serializers.Serializer):
+    lottery = LotteryMiniSerializer()
+    status = serializers.CharField()
+    reward = LotteryRewardSerializer(allow_null=True)
