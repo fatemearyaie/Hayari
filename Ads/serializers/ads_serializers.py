@@ -1,3 +1,5 @@
+from django.db import transaction
+from django.db.models import F
 from rest_framework import serializers
 from Ads.models.ads_models import AdSetting, Advertisement, AdCategory, AdEvent
 from Users.models import City
@@ -95,33 +97,55 @@ class AdvertisementReadSerializer(serializers.ModelSerializer):
         model = Advertisement
         fields = ['city', 'category', 'title', 'image', 'video', 'website']
 
-
 class AdEventSerializer(serializers.ModelSerializer):
     ad = AdvertisementReadSerializer(read_only=True)
+
     class Meta:
         model = AdEvent
-        fields = ['event_type','ad']
+        fields = ['event_type', 'ad']
 
     def validate(self, attrs):
         request = self.context.get('request')
         ad = self.context.get('ad')
 
         if not request or not request.user or not request.user.is_authenticated:
-            raise serializers.ValidationError('Authentication required.')
+            raise serializers.ValidationError({'auth': 'Authentication required.'})
 
         if ad is None:
-            raise serializers.ValidationError('Ad is required in serializer context.')
+            raise serializers.ValidationError({'ad': 'Ad is required in serializer context.'})
 
         attrs['user'] = request.user
         attrs['ad'] = ad
         return attrs
 
     def create(self, validated_data):
-        event, created = AdEvent.objects.get_or_create(
-            user=validated_data['user'],
-            ad=validated_data['ad'],
-            defaults={'event_type': validated_data['event_type']}
-        )
-        if not created:
-            raise serializers.ValidationError("you can not change your action to this ad, or set action twice!")
+        user = validated_data['user']
+        ad = validated_data['ad']
+        event_type = validated_data['event_type']
+
+        with transaction.atomic():
+            event, created = AdEvent.objects.get_or_create(
+                user=user,
+                ad=ad,
+                defaults={'event_type': event_type}
+            )
+
+            if not created:
+                raise serializers.ValidationError({
+                    'duplicate': 'You have already sent an event for this ad.'
+                })
+
+            if event_type == 'view':
+                Advertisement.objects.filter(pk=ad.pk).update(
+                    total_view=F('total_view') + 1
+                )
+            elif event_type == 'click':
+                Advertisement.objects.filter(pk=ad.pk).update(
+                    total_click=F('total_click') + 1
+                )
+            else:
+                raise serializers.ValidationError({
+                    'event_type': 'Invalid event type.'
+                })
+
         return event
