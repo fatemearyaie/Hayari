@@ -29,7 +29,7 @@ class Lottery(models.Model):
 
 class LotteryRewards(models.Model):
     lottery = models.ForeignKey(Lottery, on_delete=models.CASCADE)
-    place = models.PositiveIntegerField(editable=False)
+    place = models.PositiveIntegerField(editable=False, null=True,blank=True)
     amount = models.DecimalField(max_digits=12,decimal_places=0, null=False, blank=False)
     user = models.ForeignKey(CustomUser, null=True, blank=True,default=None,on_delete=models.SET_NULL)
 
