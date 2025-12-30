@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'Funds',
     'Ads',
     'Notification',
+    'Lottery',
 
 ]
 
