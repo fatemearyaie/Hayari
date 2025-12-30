@@ -26,10 +26,12 @@ class Lottery(models.Model):
             models.Index(fields=['name'], name='lottery_name_idx'),
             models.Index(fields=['lottery_datetime'], name='lottery_datetime_idx'),
         ]
+    def __str__(self):
+        return self.name
 
 class LotteryRewards(models.Model):
     lottery = models.ForeignKey(Lottery, on_delete=models.CASCADE)
-    place = models.PositiveIntegerField(editable=False, null=True,blank=True)
+    place = models.PositiveIntegerField(null=True,blank=True)
     amount = models.DecimalField(max_digits=12,decimal_places=0, null=False, blank=False)
     user = models.ForeignKey(CustomUser, null=True, blank=True,default=None,on_delete=models.SET_NULL)
 
@@ -46,3 +48,5 @@ class LotteryRewards(models.Model):
             models.Index(fields=['amount'], name='lottery_amount_idx'),
             models.Index(fields=['place'], name='lottery_place_idx'),
         ]
+    def __str__(self):
+        return str(self.amount)
