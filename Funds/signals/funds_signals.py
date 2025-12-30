@@ -13,6 +13,10 @@ def create_transaction_and_xp(sender, instance, created, **kwargs):
         return
 
     with transaction.atomic():
+        user = instance.user
+        user.balance -= instance.amount
+        user.save(update_fields=["balance"])
+
         Transaction.objects.create(
             user=instance.user,
             transaction_type=Transaction.TransactionType.Withdraw,

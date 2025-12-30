@@ -22,13 +22,7 @@ class AdSettingViewAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        setting = AdSetting.objects.filter(is_available=True)
-        if not setting:
-            return Response(
-                {"detail": "Ad setting not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
+        setting = AdSetting.objects.get(is_available=True)
         serializer = AdSettingSerializer(setting)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -151,6 +151,8 @@ class PaymentViewSet(viewsets.ViewSet):
                     transaction.transaction_status = Transaction.TransactionStatus.COMPLETE
                     transaction.transaction_type = Transaction.TransactionType.Deposit
                     transaction.save()
+                    transaction.balance_after = transaction.user.balance
+                    transaction.save(update_fields=["balance_after"])
 
                 context = {
                     "tracking_code": ref_id,
