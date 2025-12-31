@@ -4,9 +4,10 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 import random
+from Notification.models.notification_models import UserFCMToken
 from .models import Lottery, LotteryRewards
 from Users.models import CustomUser
-
+from Notification.tasks import send_firebase_task
 
 @shared_task
 def run_active_lottery():
@@ -83,7 +84,24 @@ def run_active_lottery():
             CustomUser.objects.filter(id=r.user_id).update(
                 balance=F("balance") + r.amount
             )
+        # 8) send notification to winners
+        for r in rewards[:k]:
+            tokens = list(
+                UserFCMToken.objects
+                .filter(user_id=r.user_id)
+                .values_list("token", flat=True)
+            )
 
-        # 8) Deactivate the lottery after the draw is completed
+            for t in tokens:
+                send_firebase_task.delay({
+                    "fcm": t,
+                    "title": "Lottery Winner!",
+                    "message": f"You won place #{r.place} and received {int(r.amount)}.",
+                    "type": "lottery_win",
+                    "lottery_id": lottery.id,
+                    "place": r.place,
+                    "amount": str(r.amount),
+                })
+        # 9) Deactivate the lottery after the draw is completed
         lottery.is_active = False
         lottery.save(update_fields=["is_active"])
