@@ -2,7 +2,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from decouple import config
-
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -187,6 +187,14 @@ CELERY_TASK_TIME_LIMIT = 30
 CELERY_TASK_ACKS_LATE = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_TASK_IGNORE_RESULT = True
+
+
+CELERY_BEAT_SCHEDULE = {
+    "run_active_lottery_every_minute": {
+        "task": "Lottery.tasks.run_active_lottery",
+        "schedule": crontab(minute="*"),
+    },
+}
 
 
 
