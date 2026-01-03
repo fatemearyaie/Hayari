@@ -194,9 +194,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "Lottery.tasks.run_active_lottery",
         "schedule": crontab(minute="*"),
     },
+    "reset_monthly_scores_first_day": {
+        "task": "Users.tasks.reset_monthly_scores",
+        "schedule": crontab(minute=0, hour=3, day_of_month=1), # first day of month at 3:00AM
+    },
 }
-
-
 
 AUTH_USER_MODEL = 'Users.CustomUser'
 

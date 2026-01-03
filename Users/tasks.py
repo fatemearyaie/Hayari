@@ -1,5 +1,6 @@
 from celery import shared_task
 from django.core.mail import EmailMultiAlternatives, get_connection
+from django.db import transaction
 from django.template.loader import render_to_string
 from celery import shared_task
 from Hayari.settings.base import SMS_API_URL, SMS_API_KEY, SMS_SENDER, SMS_PATTERN
@@ -9,6 +10,8 @@ import json
 from Hayari.settings.base import DEFAULT_FROM_EMAIL
 from smtplib import SMTPConnectError, SMTPServerDisconnected, SMTPDataError
 import socket
+
+from Users.models.users_models import CustomUser
 
 RETRY_EXC_SMS=(socket.timeout,requests.Timeout,requests.ConnectionError,requests.HTTPError,OSError,)
 RETRY_EXC=(socket.timeout, SMTPConnectError, SMTPServerDisconnected, SMTPDataError, OSError)
@@ -68,3 +71,10 @@ def send_otp_sms(self, phone: str, otp: str):
         raise RuntimeError(f"SMS provider returned status=false: {data}")
 
     return data
+
+
+@shared_task
+def reset_monthly_scores():
+    with transaction.atomic():
+        CustomUser.objects.all().update(month_score=0)
+    return {"status": "ok"}
