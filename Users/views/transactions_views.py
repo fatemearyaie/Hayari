@@ -15,9 +15,9 @@ from django.db import transaction as db_transaction
 ZP_API_REQUEST = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
 ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
-CallbackURL = 'http://api.hayari.app/api/v1/users/zarinpal/verify/'
+CallbackURL = 'http://localhost:8000/api/v1/users/zarinpal/verify/'
 
-class TransactionView(viewsets.ModelViewSet):
+class TransactionView(viewsets.ReadOnlyModelViewSet):
     throttle_scope = 'custom'
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
@@ -44,8 +44,9 @@ class PaymentViewSet(viewsets.ViewSet):
             amount = amount,
             transaction_status = Transaction.TransactionStatus.PENDING,
         )
-
-        internal_url = f"https://api.hayari.app/api/v1/users/zarinpal/{transaction.id}/request/"
+        internal_url = request.build_absolute_uri(
+            f"/api/v1/users/zarinpal/{transaction.id}/request/"
+        )
         return Response({
             "transaction_id": transaction.id,
             "amount": transaction.amount,
@@ -151,8 +152,6 @@ class PaymentViewSet(viewsets.ViewSet):
                     transaction.transaction_status = Transaction.TransactionStatus.COMPLETE
                     transaction.transaction_type = Transaction.TransactionType.Deposit
                     transaction.save()
-                    transaction.balance_after = transaction.user.balance
-                    transaction.save(update_fields=["balance_after"])
 
                 context = {
                     "tracking_code": ref_id,
@@ -175,4 +174,3 @@ class PaymentViewSet(viewsets.ViewSet):
                 "error": f"Payment failed with code {code}"
             }
             return render(request, 'error_payment.html', context)
-

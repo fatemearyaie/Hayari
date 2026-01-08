@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 
+from Funds.services.donation import donate_fundraising
 from Funds.services.list_cache import cached_list, bump_version
 from Notification.services.send_notification import send_notification
 from Funds.models.funds_models import FundRaising, Donor
@@ -96,21 +97,14 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     @action(detail=True, methods=["post"], url_path="donate")
     def donate(self, request, pk=None):
-        fundraising = get_object_or_404(FundRaising, pk=pk)
-
-        serializer = DonateSerializer(
-            data=request.data,
-            context={"request": request, "fundraising": fundraising},
+        donate_fundraising(
+            request=request,
+            fundraising_id=pk,
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
 
-        bump_version(f"fundraising:{pk}:donors:ver")
-
-        send_notification(user=request.user, message_type="donation_success")
         return Response(
             {"status": "Donation successful"},
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 class MyDonationAnayticsView(viewsets.ViewSet):

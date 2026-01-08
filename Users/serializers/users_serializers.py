@@ -42,16 +42,16 @@ class OTPVerifySerializer(serializers.Serializer):
         if not otp:
             raise serializers.ValidationError({"Code":"Please enter the code sent to your username"})
 
-        if "@" in username:
-            email = username.lower()
-            phone = None
-            qs = OTP.objects.filter(email=email, is_used=False).order_by("-created_at")
-        else:
-            phone = username.replace(" ", "").replace("+","").replace("-","")
-            email = None
-            qs = OTP.objects.filter(phone=phone, is_used=False).order_by("-created_at")
+        ident = username_identifier(username)
 
-        otp_instance =  qs.first()
+        qs = OTP.objects.filter(
+            email=ident["email"],
+            phone=ident["phone"],
+            is_used=False,
+        ).order_by("-created_at")
+
+        otp_instance = qs.first()
+
 
 
         if not otp_instance.otp:

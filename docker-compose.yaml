@@ -1,10 +1,10 @@
 services:
-  hayari:
+  django:
     build:
       context: .
       args:
         DJANGO_SETTINGS_MODULE: Hayari.settings.production
-    container_name: hayari-django
+    container_name: hayari
     volumes:
       - ./:/app
     ports:
@@ -19,7 +19,7 @@ services:
     networks:
       - hayari-network
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:172.17.0.1"
     command: >
       gunicorn Hayari.asgi:application
           -k uvicorn.workers.UvicornWorker
@@ -46,7 +46,7 @@ services:
     networks:
       - hayari-network
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:172.17.0.1"
 
   celery-beat:
     build: .
@@ -60,8 +60,6 @@ services:
       - .:/app
     depends_on:
       - redis
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
 
   redis:
@@ -77,8 +75,6 @@ services:
       --appendonly yes
       --maxmemory 512mb
       --maxmemory-policy allkeys-lru
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
 networks:
   hayari-network:

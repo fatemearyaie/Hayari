@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 
+from Funds.models import FundRaising
 from Users.models.users_models import CustomUser
 
 
@@ -33,6 +34,11 @@ class Transaction(models.Model):
     authority = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    fundraising = models.ForeignKey(FundRaising, on_delete=models.SET_NULL, null=True, blank=True)
+
+
+
 
     class Meta:
         verbose_name = 'Transaction'
