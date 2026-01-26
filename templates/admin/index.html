@@ -1,0 +1,71 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mx-auto space-y-8">
+
+  <section class="rounded-2xl border p-6">
+    <h2 class="text-xl font-semibold">{% trans "Fundraising" %}</h2>
+    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Today" %}</div>
+        <div class="text-3xl font-bold">{{ kpis.funds.today|default:0 }}</div>
+      </div>
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "This week" %}</div>
+        <div class="text-3xl font-bold">{{ kpis.funds.week|default:0 }}</div>
+      </div>
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Active" %}</div>
+        <div class="text-3xl font-bold">{{ kpis.funds.active|default:0 }}</div>
+      </div>
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Total" %}</div>
+        <div class="text-3xl font-bold">{{ kpis.funds.total|default:0 }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border p-6">
+    <h2 class="text-xl font-semibold">{% trans "Donations" %}</h2>
+    <div class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Donors today" %}</div>
+        <div class="text-3xl font-bold">{{ kpis.donors.today|default:0 }}</div>
+      </div>
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Donors this week" %}</div>
+        <div class="text-3xl font-bold">{{ kpis.donors.week|default:0 }}</div>
+      </div>
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Donors total" %}</div>
+        <div class="text-3xl font-bold">{{ kpis.donors.total|default:0 }}</div>
+      </div>
+    </div>
+
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Amount today" %}</div>
+        <div class="text-2xl font-bold">{{ kpis.donation_sum.today|default:0 }}</div>
+      </div>
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Amount this week" %}</div>
+        <div class="text-2xl font-bold">{{ kpis.donation_sum.week|default:0 }}</div>
+      </div>
+      <div class="rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Amount total" %}</div>
+        <div class="text-2xl font-bold">{{ kpis.donation_sum.total|default:0 }}</div>
+      </div>
+    </div>
+
+    {% if kpis.top_fund %}
+      <div class="mt-4 rounded-xl border p-4">
+        <div class="text-sm text-gray-500">{% trans "Top fundraising" %}</div>
+        <div class="text-lg font-semibold">{{ kpis.top_fund.title }}</div>
+        <div class="text-sm">{% trans "Current donation" %}: {{ kpis.top_fund.current_donation }}</div>
+      </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}
