@@ -62,8 +62,8 @@ class OTPVerifySerializer(serializers.Serializer):
             raise serializers.ValidationError({"Code":"This Code has already been used"})
         if otp_instance.is_expired():
             raise serializers.ValidationError({"Code":"This Code has been expired"})
-        attrs['email'] = email
-        attrs['phone'] = phone
+        attrs['email'] = otp_instance.email
+        attrs['phone'] = otp_instance.phone
         attrs['otp_instance'] = otp_instance
         return attrs
 

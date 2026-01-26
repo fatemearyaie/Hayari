@@ -8,7 +8,6 @@ from Users.utils.managers import CustomUserManager
 from django.utils.translation import gettext_lazy as _
 
 
-
 # Create your models here.
 class CustomUser(AbstractBaseUser,PermissionsMixin):
     username = models.CharField(max_length=50, unique=True)

@@ -11,6 +11,8 @@ from Users.models.users_models import CustomUser
 from Users.models.transactions_models import Transaction
 from Users.serializers.transactions_serializers import TransactionSerializer
 from django.db import transaction as db_transaction
+from Funds.services.donation import donate_fundraising
+
 
 ZP_API_REQUEST = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
@@ -29,21 +31,37 @@ class TransactionView(viewsets.ReadOnlyModelViewSet):
         return Transaction.objects.filter(user=self.request.user)
 
 
-
 class PaymentViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    @action(detail=False,methods=['post'])
+    @action(detail=False, methods=['post'])
     def start(self, request):
         user = CustomUser.objects.get(id=request.user.id)
         amount = request.data.get('amount')
+        fundraising_id = request.data.get('fundraising_id')
+
         if not amount:
-            return Response({'amount':'amount is neccessary!'})
+            return Response({'amount': 'amount is neccessary!'})
+
         transaction = Transaction.objects.create(
-            user = user,
-            amount = amount,
-            transaction_status = Transaction.TransactionStatus.PENDING,
+            user=user,
+            amount=amount,
+            transaction_status=Transaction.TransactionStatus.PENDING,
         )
+
+        if fundraising_id:
+            # ✅ 1) ست کردن فیلد fundraising روی خود Transaction
+            transaction.fundraising_id = fundraising_id
+
+            # ✅ 2) همون مارکر قبلی برای سازگاری
+            marker = f"donate:{fundraising_id}"
+            if transaction.description:
+                transaction.description = f"{transaction.description} | {marker}"
+            else:
+                transaction.description = marker
+
+            transaction.save(update_fields=["fundraising", "description"])
+
         internal_url = request.build_absolute_uri(
             f"/api/v1/users/zarinpal/{transaction.id}/request/"
         )
@@ -146,12 +164,32 @@ class PaymentViewSet(viewsets.ViewSet):
         code = data.get('code')
         ref_id = data.get('ref_id') or data.get('refId')
 
-        if code in (100,101):
+        if code in (100, 101):
             try:
                 with db_transaction.atomic():
                     transaction.transaction_status = Transaction.TransactionStatus.COMPLETE
                     transaction.transaction_type = Transaction.TransactionType.Deposit
                     transaction.save()
+
+                    # ----------------------------
+                    # donate inline (بدون فانکشن جدا)
+                    fundraising_id = None
+                    desc = transaction.description or ""
+                    parts = [p.strip() for p in desc.split("|") if p.strip()]
+                    for p in parts:
+                        if p.startswith("donate:"):
+                            fundraising_id = p.split("donate:", 1)[1].strip()
+                            break
+
+                    if fundraising_id:
+                        donate_fundraising(
+                            user=transaction.user,
+                            fundraising_id=fundraising_id,
+                            amount=transaction.amount,
+                            charge_wallet=False,  # پرداخت مستقیم: بالانس به ما مربوط نیست
+                            request=None,
+                        )
+                    # ----------------------------
 
                 context = {
                     "tracking_code": ref_id,

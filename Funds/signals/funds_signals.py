@@ -1,6 +1,8 @@
 from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
+from datetime import timedelta
 
 from Funds.models.funds_models import Donor
 from Users.models.users_models import XPTracker
@@ -14,20 +16,37 @@ def create_transaction_and_xp(sender, instance, created, **kwargs):
 
     with transaction.atomic():
         user = instance.user
-        user.balance -= instance.amount
-        user.save(update_fields=["balance"])
 
-        Transaction.objects.create(
-            user=instance.user,
-            transaction_type=Transaction.TransactionType.Withdraw,
+        # ✅ تشخیص donate از درگاه (برای اینکه بالانس کم نشه)
+        recent_from = timezone.now() - timedelta(minutes=10)
+
+        is_gateway_donation = Transaction.objects.filter(
+            user=user,
             transaction_status=Transaction.TransactionStatus.COMPLETE,
-            payment_gateway=Transaction.PaymentGateWay.app,
+            transaction_type=Transaction.TransactionType.Deposit,
             amount=instance.amount,
-            balance_after=instance.user.balance - instance.amount,
-        )
+            description__contains="donate:",
+            created_at__gte=recent_from,  # اگر created_at داری
+        ).exists()
 
+        if not is_gateway_donation:
+            # ✅ donate از کیف پول => کسر موجودی + ثبت Withdraw
+            user.balance -= instance.amount
+            user.save(update_fields=["balance"])
+
+            Transaction.objects.create(
+                user=user,
+                fundraising=instance.fundraising,  # ✅ این خط کلیدی بود
+                transaction_type=Transaction.TransactionType.Withdraw,
+                transaction_status=Transaction.TransactionStatus.COMPLETE,
+                payment_gateway=Transaction.PaymentGateWay.app,
+                amount=instance.amount,
+                balance_after=user.balance,  # ✅ درست
+            )
+
+        # ✅ XP همیشه ثبت میشه
         XPTracker.objects.create(
-            user=instance.user,
+            user=user,
             xp=instance.xp,
             reason=XPTracker.Reason.donation,
         )
