@@ -3,6 +3,7 @@ from datetime import timedelta
 from pathlib import Path
 from decouple import config
 from celery.schedules import crontab
+from django.templatetags.static import static
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -222,3 +223,17 @@ SMS_PATTERN = config('SMS_PATTERN', default='')
 
 MERCHANT = config('MERCHANT')
 SANDBOX = True
+
+UNFOLD = {
+    "DASHBOARD_CALLBACK": "Hayari.admin.dashboard.dashboard_context",
+    "SCRIPTS": [lambda request: static("../admin/js/chart.umd.min.js")],
+
+    "SITE_TITLE": "Hayari",
+    "SITE_HEADER": "Hayari",
+    "SITE_SUBHEADER": "Operations Console",
+    "SITE_URL": "/",
+
+    "THEME": None,
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+}

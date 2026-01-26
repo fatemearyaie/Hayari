@@ -97,9 +97,19 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     @action(detail=True, methods=["post"], url_path="donate")
     def donate(self, request, pk=None):
+        user = request.user
+        amount = request.data.get('amount')
+
+        if not amount:
+            return Response(
+                {"detail": "Amount is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         donate_fundraising(
-            request=request,
+            user=user,
             fundraising_id=pk,
+            amount=amount,
         )
 
         return Response(

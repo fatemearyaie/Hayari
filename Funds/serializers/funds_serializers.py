@@ -23,6 +23,10 @@ class FundRaisingDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = FundRaising
         fields = ['title','current_donation','city','each_don_xp','images','description','total_amount','start_date','end_date','latitude','longitude','website']
+from rest_framework import serializers
+from django.db import transaction
+from Funds.models.funds_models import Donor
+from Users.models import CustomUser
 
 
 class DonateSerializer(serializers.ModelSerializer):
@@ -35,10 +39,15 @@ class DonateSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         fundraising = self.context["fundraising"]
 
+        charge_wallet = self.context.get("charge_wallet", True)
+
         if not fundraising.is_available:
-            return serializers.ValidationError({"detail": "this fundraising is not available anymore"})
-        if user.balance <= amount:
-            return serializers.ValidationError({"detail": "Insufficient balance"})
+            raise serializers.ValidationError({"detail": "this fundraising is not available anymore"})
+
+        # فقط وقتی از کیف پول پرداخت میشه
+        if charge_wallet:
+            if user.balance < amount:
+                raise serializers.ValidationError({"detail": "Insufficient balance"})
 
         return attrs
 
@@ -55,9 +64,12 @@ class DonateSerializer(serializers.ModelSerializer):
                 user=user,
                 amount=amount,
                 xp=fundraising.each_don_xp,
-                fundraising=fundraising,)
+                fundraising=fundraising,
+            )
 
         return donor
+
+
 
 class DonorSerializer(serializers.ModelSerializer):
     user = OtherUserProfileSerializer()
