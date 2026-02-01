@@ -58,6 +58,8 @@ services:
       DJANGO_SETTINGS_MODULE: Hayari.settings.production
     volumes:
       - .:/app
+    networks:
+      - hayari-network
     depends_on:
       - redis
 
