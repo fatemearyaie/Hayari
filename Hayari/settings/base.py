@@ -85,7 +85,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'user': '10000/day',
         'anon': '1000/day',
-        'custom': '5/minute',
+        'custom': '500/minute',
     }
 }
 
@@ -237,3 +237,6 @@ UNFOLD = {
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
 }
+
+
+MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB

@@ -45,6 +45,25 @@ class AdCategoryViewSet(ReadOnlyModelViewSet):
 class AdvertisementViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
+    filter_backends = [DjangoFilterBackend,SearchFilter,OrderingFilter,]
+
+    filterset_fields = {
+        'status': ['exact'],
+        'category': ['exact'],
+        'city': ['exact'],
+        'created_at': ['gte', 'lte'],
+    }
+
+    search_fields = [
+        'title',
+    ]
+
+    ordering_fields = [
+        'created_at',
+        'price',
+        'view_count',
+    ]
+
     def get_serializer_class(self):
         if self.action == 'create':  # POST
             return CreateAdvertisementSerializer
@@ -83,8 +102,8 @@ class AllAdvertisementViewSet(ReadOnlyModelViewSet):
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter, ]
     filterset_fields = ['category','created_at','city']
-    search_fields = ['title','category','city']
-    ordering_fields = ['created_at', 'title','city']
+    search_fields = ['title']
+    ordering_fields = ['created_at']
     ordering = ['created_at']
 
     def get_queryset(self):

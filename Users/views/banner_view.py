@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from Users.models.banner_models import HomeBanner, LoginEntry
 from Users.serializers.banner_serializers import HomeBannerSerializer
@@ -16,16 +17,9 @@ class BannerView(APIView):
         return Response(banners)
 
 
-class HomeBannerView(APIView):
-    def get(self, request):
-        banner = HomeBanner.objects.order_by('-created_at').first()
-        if not banner:
-            return Response(
-                {"detail": "No banner available"},
-                status=status.HTTP_204_NO_CONTENT
-            )
-        serializer = HomeBannerSerializer(banner)
-        return Response(serializer.data)
+class HomeBannerView(ReadOnlyModelViewSet):
+    queryset = HomeBanner.objects.all()
+    serializer_class = HomeBannerSerializer
 
 
 

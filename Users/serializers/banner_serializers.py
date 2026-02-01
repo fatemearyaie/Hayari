@@ -11,4 +11,4 @@ class BannerSerializer(serializers.ModelSerializer):
 class HomeBannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = HomeBanner
-        fields = ['banner','message']
+        fields = ['banner','message', 'url']

@@ -30,8 +30,8 @@ class FundRaisingGV(
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
 
     filterset_fields = ['title', 'current_donation', 'city', 'each_don_xp', 'start_date']
-    search_fields = ['title', 'start_date', 'city']
-    ordering_fields = ['title', 'start_date']
+    search_fields = ['title']
+    ordering_fields = ['start_date', 'total_amount']
     ordering = ['title', 'start_date']
 
     def get_serializer_class(self):

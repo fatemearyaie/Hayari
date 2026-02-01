@@ -8,14 +8,13 @@ from Users.views.users_views import OTPGeneratorView, OTPVerifyView, UserProfile
 router = DefaultRouter()
 router.register(r'zarinpal', PaymentViewSet, basename='zarinpal')
 router.register(r'transactions', TransactionView, basename='transaction')
-
+router.register(r'home/banner', HomeBannerView, basename='home')
 
 urlpatterns =[
     path('profile/', UserProfileView.as_view(), name='profile'),
     path('auth/', OTPGeneratorView.as_view(), name='auth'),
     path('auth/register/', OTPVerifyView.as_view(), name='auth-register'),
     path('cities/', CityView.as_view(), name='city-list'),
-    path('home/banner/',HomeBannerView.as_view(), name='home-banner'),
     path('splash/', SplashView.as_view(),name='splash'),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]

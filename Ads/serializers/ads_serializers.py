@@ -87,7 +87,7 @@ class MyAdvertisementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Advertisement
-        fields = ['city', 'category', 'title', 'image', 'video', 'website','status','total_view','total_click','created_at','updated_at',]
+        fields = ['id','city', 'category', 'title', 'image', 'video', 'website','status','total_view','total_click','created_at','updated_at',]
 
 class AdvertisementReadSerializer(serializers.ModelSerializer):
     city = CitySerializer()
@@ -95,7 +95,7 @@ class AdvertisementReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Advertisement
-        fields = ['city', 'category', 'title', 'image', 'video', 'website']
+        fields = ['id','city', 'category', 'title', 'image', 'video', 'website']
 
 class AdEventSerializer(serializers.ModelSerializer):
     ad = AdvertisementReadSerializer(read_only=True)
