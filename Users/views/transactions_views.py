@@ -17,7 +17,7 @@ from Funds.services.donation import donate_fundraising
 ZP_API_REQUEST = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
 ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
-CallbackURL = 'http://localhost:8000/api/v1/users/zarinpal/verify/'
+CallbackURL = 'http://api.hayari.app/api/v1/users/zarinpal/verify/'
 
 class TransactionView(viewsets.ReadOnlyModelViewSet):
     throttle_scope = 'custom'
@@ -50,10 +50,8 @@ class PaymentViewSet(viewsets.ViewSet):
         )
 
         if fundraising_id:
-            # ✅ 1) ست کردن فیلد fundraising روی خود Transaction
             transaction.fundraising_id = fundraising_id
 
-            # ✅ 2) همون مارکر قبلی برای سازگاری
             marker = f"donate:{fundraising_id}"
             if transaction.description:
                 transaction.description = f"{transaction.description} | {marker}"
