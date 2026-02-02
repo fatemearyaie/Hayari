@@ -3,6 +3,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from Users.models import CustomUser
 from Users.services.city_cache import get_cached_cities
 from Users.tasks import send_otp_sms, send_otp_email
 from Users.serializers.users_serializers import OTPGeneratorSerializer, OTPVerifySerializer, UserProfileSerializer, \
@@ -43,11 +44,13 @@ class UserProfileView(APIView):
     throttle_scope = 'user'
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        serializer = UserProfileSerializer(request.user)
+        user = CustomUser.objects.filter(user=request.user)
+        serializer = UserProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request):
-        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        user = CustomUser.objects.filter(user=request.user)
+        serializer = UserProfileSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
