@@ -61,17 +61,21 @@ class PaymentViewSet(viewsets.ViewSet):
                 user.balance = wallet_balance - pay_from_wallet
                 user.save(update_fields=["balance"])
 
-        donor = Donor.objects.create(
-            user=user,
-            amount=amount,
-            xp=fundraising.each_don_xp,
-            fundraising=fundraising,
-        )
+        from_wallet = pay_from_gateway == 0
 
-        if pay_from_gateway <= 0:
+        if from_wallet:
+            Transaction.objects.create(
+                fundraising=fundraising,
+                user=user,
+                amount=amount,
+                transaction_status=Transaction.TransactionStatus.COMPLETE,
+                transaction_type=Transaction.TransactionType.Withdraw,
+                from_wallet=True,
+            )
+
             return Response({
                 "status": "donated_only_wallet",
-                "donor_id": donor.id,
+                "from_wallet": True,
                 "pay_from_wallet": float(pay_from_wallet),
                 "pay_from_gateway": 0,
             })
@@ -82,6 +86,7 @@ class PaymentViewSet(viewsets.ViewSet):
             amount=pay_from_gateway,
             transaction_status=Transaction.TransactionStatus.PENDING,
             transaction_type=Transaction.TransactionType.Deposit,
+            from_wallet=False,
             description=f"پرداخت برای حمایت از:{fundraising_id} انجام شد!",
         )
 
@@ -91,11 +96,11 @@ class PaymentViewSet(viewsets.ViewSet):
 
         return Response({
             "transaction_id": transaction_obj.id,
+            "from_wallet": False,  # ✅ بولین
             "pay_from_wallet": float(pay_from_wallet),
             "pay_from_gateway": float(pay_from_gateway),
             "payment_url": internal_url,
         })
-
     @action(detail=True, methods=['get'], permission_classes=[AllowAny])
     def request(self, request, pk=None):
         transaction = get_object_or_404(Transaction, id=pk)

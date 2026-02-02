@@ -59,6 +59,7 @@ class Donor(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     xp = models.PositiveIntegerField(default=0)
 
+
     def save(self, *args, **kwargs):
         if not self.pk:
             with transaction.atomic():
