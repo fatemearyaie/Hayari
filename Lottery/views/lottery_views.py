@@ -15,7 +15,7 @@ from Lottery.serializers.lottery_serializers import ActiveLotterySerializer, Lot
 class ActiveLotteryView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        queryset = Lottery.objects.get(is_active=True)
+        queryset = Lottery.objects.prefetch_related('lotteryrewards_set').get(is_active=True)
         serializer = ActiveLotterySerializer(queryset)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -42,7 +42,7 @@ class LastLotteryUserStatusView(APIView):
     def get(self, request):
         last_lottery = Lottery.objects.order_by("-lottery_datetime", "-id").first()
         if not last_lottery:
-            return Response({"detail": "No lottery found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"اخطار": "لاتاری پیدا نشد"}, status=status.HTTP_404_NOT_FOUND)
         reward = (LotteryRewards.objects.select_related('user').filter(lottery=last_lottery, user=request.user).first())
         data = {
             "lottery": last_lottery,

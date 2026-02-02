@@ -12,7 +12,7 @@ class OTPGeneratorSerializer(serializers.Serializer):
         username = attrs['username'].strip()
 
         if not username:
-            raise serializers.ValidationError({"Username":"Either phone or email must be set."})
+            raise serializers.ValidationError({"اخطار":"شماره تلفن یا ایمیل خود را وارد کنید"})
 
         identifiers = username_identifier(username)
 
@@ -37,10 +37,8 @@ class OTPVerifySerializer(serializers.Serializer):
         username = attrs['username'].strip()
         otp = attrs['otp'].strip()
 
-        if not username:
-            raise serializers.ValidationError({"Username":"Either phone or email must be set."})
         if not otp:
-            raise serializers.ValidationError({"Code":"Please enter the code sent to your username"})
+            raise serializers.ValidationError({"اخطار":"لطفا کدی که به شماره تلفن یا ایمیل شده ارسال شده است را وارد کنید"})
 
         ident = username_identifier(username)
 
@@ -55,13 +53,13 @@ class OTPVerifySerializer(serializers.Serializer):
 
 
         if not otp_instance.otp:
-            raise serializers.ValidationError({"Code":"Code not found"})
+            raise serializers.ValidationError({"اخطار":"کد پیدا نشد."})
         if otp_instance.otp != otp:
-            raise serializers.ValidationError({"Code":"Wrong Code"})
+            raise serializers.ValidationError({"اخطار":"کد نامعبتر است"})
         if otp_instance.is_used:
-            raise serializers.ValidationError({"Code":"This Code has already been used"})
+            raise serializers.ValidationError({"اخطار":"این کد قبلا استفاده شده است."})
         if otp_instance.is_expired():
-            raise serializers.ValidationError({"Code":"This Code has been expired"})
+            raise serializers.ValidationError({"اخطار":"این کد منقضی شده است دوباره تلاش کنید."})
         attrs['email'] = otp_instance.email
         attrs['phone'] = otp_instance.phone
         attrs['otp_instance'] = otp_instance

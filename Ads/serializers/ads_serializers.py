@@ -27,16 +27,16 @@ class CreateAdvertisementSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
-            raise serializers.ValidationError({'auth': 'Authentication required.'})
+            raise serializers.ValidationError({'اخطار': 'احراز هویت کنید.'})
 
         image = attrs.get('image')
         video = attrs.get('video')
 
         if not image and not video:
-            raise serializers.ValidationError({'files': 'Send either image or video.'})
+            raise serializers.ValidationError({'فایل': 'فایل تصویر یا ویدیو ارسال کنید.'})
 
         if image and video:
-            raise serializers.ValidationError({'files': 'Send only one of image or video.'})
+            raise serializers.ValidationError({'فایل': 'لطفا فقط تصویر یا فقط ویدیو ارسال کنید.'})
 
         return attrs
 
@@ -54,19 +54,6 @@ class UpdateAdvertisementSerializer(serializers.ModelSerializer):
         model = Advertisement
         fields = ['city','category','title','image', 'video','website']
 
-    def validate(self, attrs):
-        user = self.context.get('request').user
-
-        title = (attrs.get('title') or '').strip()
-        city = attrs.get('city')
-        category = attrs.get('category')
-
-        if Advertisement.objects.filter(
-                user=user,city=city,category=category,title=title,).exists():
-            raise serializers.ValidationError(
-                {'duplicate': 'You already created an ad with the same city/category/title.'})
-
-        return attrs
 
 class MyAdvertisementSerializer(serializers.ModelSerializer):
     city = CitySerializer()
@@ -96,10 +83,10 @@ class AdEventSerializer(serializers.ModelSerializer):
         ad = self.context.get('ad')
 
         if not request or not request.user or not request.user.is_authenticated:
-            raise serializers.ValidationError({'auth': 'Authentication required.'})
+            raise serializers.ValidationError({'اخطار': 'احراز هویت کنید'})
 
         if ad is None:
-            raise serializers.ValidationError({'ad': 'Ad is required in serializer context.'})
+            raise serializers.ValidationError({'اخطار': 'هیچ تبلیغی وجود ندارد'})
 
         attrs['user'] = request.user
         attrs['ad'] = ad
@@ -119,7 +106,7 @@ class AdEventSerializer(serializers.ModelSerializer):
 
             if not created:
                 raise serializers.ValidationError({
-                    'duplicate': 'You have already sent an event for this ad.'
+                    'اخطار': 'این تبلیغ قبلا توسط شما دیده شده است.'
                 })
 
             if event_type == 'view':
