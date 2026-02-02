@@ -46,61 +46,61 @@ class PaymentViewSet(viewsets.ViewSet):
         amount = Decimal(request.data.get("amount", 0))
 
         if amount <= 0:
-            return Response({"اخطار": "مبلغ وارد شده باید بیشتر از 0 باشد."})
+            return Response({"error": "amount > 0"})
 
         fundraising = get_object_or_404(FundRaising, pk=fundraising_id)
 
         with db_transaction.atomic():
             user = CustomUser.objects.select_for_update().get(pk=user.pk)
-
             wallet_balance = user.balance or Decimal(0)
+
             pay_from_wallet = min(wallet_balance, amount)
             pay_from_gateway = amount - pay_from_wallet
 
-            if pay_from_wallet > 0:
-                user.balance = wallet_balance - pay_from_wallet
-                user.save(update_fields=["balance"])
+            # اگر کل مبلغ از ولت بود → همینجا verify داخلی
+            if pay_from_gateway == 0:
+                user.balance -= amount
+                user.save()
 
-        from_wallet = pay_from_gateway == 0
+                Donor.objects.create(
+                    user=user,
+                    fundraising=fundraising,
+                    amount=amount,
+                    xp=fundraising.each_don_xp,
+                )
 
-        if from_wallet:
-            Transaction.objects.create(
-                fundraising=fundraising,
+                Transaction.objects.create(
+                    user=user,
+                    fundraising=fundraising,
+                    amount=amount,
+                    transaction_status=Transaction.TransactionStatus.COMPLETE,
+                    from_wallet=True,
+                )
+
+                return Response({
+                    "from_wallet": True,
+                    "pay_from_wallet": float(amount),
+                    "pay_from_gateway": 0,
+                })
+
+            # اگر ترکیبی یا فقط زرین پال
+            tx = Transaction.objects.create(
                 user=user,
-                amount=amount,
-                transaction_status=Transaction.TransactionStatus.COMPLETE,
-                transaction_type=Transaction.TransactionType.Withdraw,
-                from_wallet=True,
+                fundraising=fundraising,
+                amount=pay_from_gateway,
+                transaction_status=Transaction.TransactionStatus.PENDING,
+                from_wallet=False,
             )
 
-            return Response({
-                "status": "donated_only_wallet",
-                "from_wallet": True,
-                "pay_from_wallet": float(pay_from_wallet),
-                "pay_from_gateway": 0,
-            })
-
-        transaction_obj = Transaction.objects.create(
-            fundraising=fundraising,
-            user=user,
-            amount=pay_from_gateway,
-            transaction_status=Transaction.TransactionStatus.PENDING,
-            transaction_type=Transaction.TransactionType.Deposit,
-            from_wallet=False,
-            description=f"پرداخت برای حمایت از:{fundraising_id} انجام شد!",
-        )
-
-        internal_url = request.build_absolute_uri(
-            f"/api/v1/users/zarinpal/{transaction_obj.id}/request/"
-        )
-
+        url = request.build_absolute_uri(f"/api/zarinpal/{tx.id}/request/")
         return Response({
-            "transaction_id": transaction_obj.id,
-            "from_wallet": False,  # ✅ بولین
+            "from_wallet": False,
             "pay_from_wallet": float(pay_from_wallet),
             "pay_from_gateway": float(pay_from_gateway),
-            "payment_url": internal_url,
+            "payment_url": url,
         })
+
+
     @action(detail=True, methods=['get'], permission_classes=[AllowAny])
     def request(self, request, pk=None):
         transaction = get_object_or_404(Transaction, id=pk)
@@ -160,3 +160,6 @@ class PaymentViewSet(viewsets.ViewSet):
             )
 
         return render(request, "success_payment.html", {"donor": donor})
+
+
+
