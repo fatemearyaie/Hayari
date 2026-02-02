@@ -29,6 +29,7 @@ def create_transaction_and_xp(sender, instance, created, **kwargs):
                 payment_gateway=Transaction.PaymentGateWay.app,
                 amount=instance.amount,
                 balance_after=user.balance,
+                description=f"donation for {instance.fundraising.title}",
             )
 
         XPTracker.objects.create(

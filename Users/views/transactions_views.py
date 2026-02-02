@@ -46,11 +46,10 @@ class PaymentViewSet(viewsets.ViewSet):
         amount = Decimal(request.data.get("amount", 0))
 
         if amount <= 0:
-            return Response({"error": "Amount must be greater than zero"})
+            return Response({"اخطار": "مبلغ وارد شده باید بیشتر از 0 باشد."})
 
         fundraising = get_object_or_404(FundRaising, pk=fundraising_id)
 
-        # 🔒 قفل کاربر برای جلوگیری از race condition
         with db_transaction.atomic():
             user = CustomUser.objects.select_for_update().get(pk=user.pk)
 
@@ -58,12 +57,10 @@ class PaymentViewSet(viewsets.ViewSet):
             pay_from_wallet = min(wallet_balance, amount)
             pay_from_gateway = amount - pay_from_wallet
 
-            # ✅ کم کردن فقط یکبار و صحیح
             if pay_from_wallet > 0:
                 user.balance = wallet_balance - pay_from_wallet
                 user.save(update_fields=["balance"])
 
-        # ✅ ساخت Donor (سیگنال XP و ... اجرا میشه)
         donor = Donor.objects.create(
             user=user,
             amount=amount,
@@ -71,7 +68,6 @@ class PaymentViewSet(viewsets.ViewSet):
             fundraising=fundraising,
         )
 
-        # ✅ اگر همه مبلغ از کیف پول بود
         if pay_from_gateway <= 0:
             return Response({
                 "status": "donated_only_wallet",
@@ -80,14 +76,13 @@ class PaymentViewSet(viewsets.ViewSet):
                 "pay_from_gateway": 0,
             })
 
-        # ✅ اگر باید زرین پال پرداخت کند
         transaction_obj = Transaction.objects.create(
             fundraising=fundraising,
             user=user,
-            amount=pay_from_gateway,  # Decimal نگه دار
+            amount=pay_from_gateway,
             transaction_status=Transaction.TransactionStatus.PENDING,
-            transaction_type=Transaction.TransactionType.Deposit,  # مهم
-            description=f"donate:{fundraising_id}",
+            transaction_type=Transaction.TransactionType.Deposit,
+            description=f"پرداخت برای حمایت از:{fundraising_id} انجام شد!",
         )
 
         internal_url = request.build_absolute_uri(
@@ -148,7 +143,6 @@ class PaymentViewSet(viewsets.ViewSet):
             transaction.save()
             return render(request, "error_payment.html")
 
-        # ✅ پرداخت موفق
         with db_transaction.atomic():
             transaction.transaction_status = Transaction.TransactionStatus.COMPLETE
             transaction.save()

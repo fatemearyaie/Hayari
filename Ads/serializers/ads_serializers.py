@@ -29,11 +29,6 @@ class CreateAdvertisementSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             raise serializers.ValidationError({'auth': 'Authentication required.'})
 
-        user = request.user
-        city = attrs.get('city')
-        category = attrs.get('category')
-        title = (attrs.get('title') or '').strip()
-
         image = attrs.get('image')
         video = attrs.get('video')
 
@@ -43,14 +38,6 @@ class CreateAdvertisementSerializer(serializers.ModelSerializer):
         if image and video:
             raise serializers.ValidationError({'files': 'Send only one of image or video.'})
 
-        if Advertisement.objects.filter(
-                user=user, city=city, category=category, title__iexact=title
-        ).exists():
-            raise serializers.ValidationError(
-                {'duplicate': 'You already created an ad with the same city/category/title.'}
-            )
-
-        attrs['title'] = title
         return attrs
 
     def create(self, validated_data):

@@ -7,4 +7,5 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['transaction_id', 'transaction_status', 'description', 'amount',
-                  'balance_after', 'tracking_code', 'transaction_type','currency','payment_gateway']
+                  'balance_after', 'tracking_code', 'transaction_type','currency','payment_gateway',
+                  'created_at']

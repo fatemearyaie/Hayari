@@ -32,7 +32,7 @@ class FundRaisingGV(
     filterset_fields = ['title', 'current_donation', 'city', 'each_don_xp', 'start_date']
     search_fields = ['title']
     ordering_fields = ['start_date', 'total_amount']
-    ordering = ['title', 'start_date']
+    ordering = ['start_date', 'total_amount']
 
     def get_serializer_class(self):
         if self.action == "retrieve":
