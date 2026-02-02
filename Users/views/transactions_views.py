@@ -1,4 +1,7 @@
+from decimal import Decimal
+
 import requests
+from django.db.models import F
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django_filters.rest_framework import DjangoFilterBackend
@@ -6,6 +9,8 @@ from rest_framework import viewsets ,filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+
+from Funds.models import FundRaising, Donor
 from Hayari.settings.base import MERCHANT
 from Users.models.users_models import CustomUser
 from Users.models.transactions_models import Transaction
@@ -17,7 +22,7 @@ from Funds.services.donation import donate_fundraising
 ZP_API_REQUEST = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
 ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
-CallbackURL = 'http://api.hayari.app/api/v1/users/zarinpal/verify/'
+CallbackURL = 'http://localhost:8000/api/v1/users/zarinpal/verify/'
 
 class TransactionView(viewsets.ReadOnlyModelViewSet):
     throttle_scope = 'custom'
@@ -36,36 +41,63 @@ class PaymentViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def start(self, request):
-        user = CustomUser.objects.get(id=request.user.id)
-        amount = request.data.get('amount')
-        fundraising_id = request.data.get('fundraising_id')
+        user = request.user
+        fundraising_id = request.data.get("fundraising_id")
+        amount = Decimal(request.data.get("amount", 0))
 
-        if not amount:
-            return Response({'amount': 'amount is neccessary!'})
+        if amount <= 0:
+            return Response({"error": "Amount must be greater than zero"})
 
-        transaction = Transaction.objects.create(
+        fundraising = get_object_or_404(FundRaising, pk=fundraising_id)
+
+        # 🔒 قفل کاربر برای جلوگیری از race condition
+        with db_transaction.atomic():
+            user = CustomUser.objects.select_for_update().get(pk=user.pk)
+
+            wallet_balance = user.balance or Decimal(0)
+            pay_from_wallet = min(wallet_balance, amount)
+            pay_from_gateway = amount - pay_from_wallet
+
+            # ✅ کم کردن فقط یکبار و صحیح
+            if pay_from_wallet > 0:
+                user.balance = wallet_balance - pay_from_wallet
+                user.save(update_fields=["balance"])
+
+        # ✅ ساخت Donor (سیگنال XP و ... اجرا میشه)
+        donor = Donor.objects.create(
             user=user,
             amount=amount,
-            transaction_status=Transaction.TransactionStatus.PENDING,
+            xp=fundraising.each_don_xp,
+            fundraising=fundraising,
         )
 
-        if fundraising_id:
-            transaction.fundraising_id = fundraising_id
+        # ✅ اگر همه مبلغ از کیف پول بود
+        if pay_from_gateway <= 0:
+            return Response({
+                "status": "donated_only_wallet",
+                "donor_id": donor.id,
+                "pay_from_wallet": float(pay_from_wallet),
+                "pay_from_gateway": 0,
+            })
 
-            marker = f"donate:{fundraising_id}"
-            if transaction.description:
-                transaction.description = f"{transaction.description} | {marker}"
-            else:
-                transaction.description = marker
-
-            transaction.save(update_fields=["fundraising", "description"])
+        # ✅ اگر باید زرین پال پرداخت کند
+        transaction_obj = Transaction.objects.create(
+            fundraising=fundraising,
+            user=user,
+            amount=pay_from_gateway,  # Decimal نگه دار
+            transaction_status=Transaction.TransactionStatus.PENDING,
+            transaction_type=Transaction.TransactionType.Deposit,  # مهم
+            description=f"donate:{fundraising_id}",
+        )
 
         internal_url = request.build_absolute_uri(
-            f"/api/v1/users/zarinpal/{transaction.id}/request/"
+            f"/api/v1/users/zarinpal/{transaction_obj.id}/request/"
         )
+
         return Response({
-            "transaction_id": transaction.id,
-            "amount": transaction.amount,
+            "transaction_id": transaction_obj.id,
+            "pay_from_wallet": float(pay_from_wallet),
+            "pay_from_gateway": float(pay_from_gateway),
             "payment_url": internal_url,
         })
 
@@ -73,63 +105,34 @@ class PaymentViewSet(viewsets.ViewSet):
     def request(self, request, pk=None):
         transaction = get_object_or_404(Transaction, id=pk)
 
-        if transaction.authority:
-            return redirect(f"{ZP_API_STARTPAY}{transaction.authority}")
-
-        callback_url = f"{CallbackURL}?transaction_id={transaction.id}"
-
         payload = {
             "merchant_id": MERCHANT,
             "amount": int(transaction.amount),
-            "callback_url": callback_url,
-            "description": transaction.description or "payment",
+            "callback_url": f"{CallbackURL}?transaction_id={transaction.id}",
+            "description": "donation",
         }
 
-        try:
-            resp = requests.post(ZP_API_REQUEST, json=payload, timeout=10)
-            resp_json = resp.json()
-        except requests.RequestException:
-            return HttpResponse("payment gateway request failed", status=502)
-        except ValueError:
-            return HttpResponse("invalid gateway response", status=502)
+        resp = requests.post(ZP_API_REQUEST, json=payload).json()
+        if resp["data"]["code"] != 100:
+            return HttpResponse(str(resp), status=400)
 
-        errors = resp_json.get("errors")
-        data = resp_json.get("data")
-
-        if errors:
-            return HttpResponse(f"zarinpal error: {errors}", status=400)
-
-        if not data or data.get("code") != 100:
-            return HttpResponse(f"zarinpal response: {resp_json}", status=400)
-
-        transaction.authority = data["authority"]
+        transaction.authority = resp["data"]["authority"]
         transaction.save()
 
-        return redirect(f"{ZP_API_STARTPAY}{transaction.authority}")
+        return redirect(ZP_API_STARTPAY + transaction.authority)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def verify(self, request):
-        authority = request.GET.get('authority') or request.GET.get('Authority')
-        status = request.GET.get('status') or request.GET.get('Status')
-        tx_id = request.GET.get('transaction_id')
-
-        if not tx_id or not authority:
-            return HttpResponse('Invalid CallBack Parameter!')
+        tx_id = request.GET.get("transaction_id")
+        authority = request.GET.get("Authority")
+        status = request.GET.get("Status")
 
         transaction = get_object_or_404(Transaction, id=tx_id)
 
-        if not transaction.authority:
-            transaction.authority = authority
-            transaction.save()
-
-        if status is None or status.lower() != 'ok':
+        if status != "OK":
             transaction.transaction_status = Transaction.TransactionStatus.CANCEL
             transaction.save()
-            context = {
-                "transaction": transaction,
-                'error': 'payment canceled!'
-            }
-            return render(request, 'error_payment.html', context)
+            return render(request, "error_payment.html")
 
         payload = {
             "merchant_id": MERCHANT,
@@ -137,76 +140,24 @@ class PaymentViewSet(viewsets.ViewSet):
             "amount": int(transaction.amount),
         }
 
-        try:
-            resp = requests.post(ZP_API_VERIFY, json=payload, timeout=10)
-        except requests.RequestException:
+        resp = requests.post(ZP_API_VERIFY, json=payload).json()
+        code = resp["data"]["code"]
+
+        if code not in [100, 101]:
             transaction.transaction_status = Transaction.TransactionStatus.CANCEL
             transaction.save()
-            context = {
-                "transaction": transaction,
-                "error": "Network error"
-            }
-            return render(request, 'error_payment.html', context)
+            return render(request, "error_payment.html")
 
-        if resp.status_code != 200:
-            transaction.transaction_status = Transaction.TransactionStatus.CANCEL
+        # ✅ پرداخت موفق
+        with db_transaction.atomic():
+            transaction.transaction_status = Transaction.TransactionStatus.COMPLETE
             transaction.save()
-            context = {
-                "transaction": transaction,
-                "error": "Gateway error"
-            }
-            return render(request, 'error_payment.html', context)
 
-        resp_json = resp.json()
-        data = resp_json.get("data", {})
-        code = data.get('code')
-        ref_id = data.get('ref_id') or data.get('refId')
+            donor = Donor.objects.create(
+                user=transaction.user,
+                fundraising=transaction.fundraising,
+                amount=transaction.amount,
+                xp=transaction.fundraising.each_don_xp
+            )
 
-        if code in (100, 101):
-            try:
-                with db_transaction.atomic():
-                    transaction.transaction_status = Transaction.TransactionStatus.COMPLETE
-                    transaction.transaction_type = Transaction.TransactionType.Deposit
-                    transaction.save()
-
-                    # ----------------------------
-                    # donate inline (بدون فانکشن جدا)
-                    fundraising_id = None
-                    desc = transaction.description or ""
-                    parts = [p.strip() for p in desc.split("|") if p.strip()]
-                    for p in parts:
-                        if p.startswith("donate:"):
-                            fundraising_id = p.split("donate:", 1)[1].strip()
-                            break
-
-                    if fundraising_id:
-                        donate_fundraising(
-                            user=transaction.user,
-                            fundraising_id=fundraising_id,
-                            amount=transaction.amount,
-                            charge_wallet=False,  # پرداخت مستقیم: بالانس به ما مربوط نیست
-                            request=None,
-                        )
-                    # ----------------------------
-
-                context = {
-                    "tracking_code": ref_id,
-                    "transaction": transaction,
-                }
-                return render(request, 'success_payment.html', context)
-
-            except Exception as e:
-                context = {
-                    "transaction": transaction,
-                    "error": f"Internal database error: {str(e)}"
-                }
-                return render(request, 'error_payment.html', context)
-
-        else:
-            transaction.transaction_status = Transaction.TransactionStatus.CANCEL
-            transaction.save()
-            context = {
-                "transaction": transaction,
-                "error": f"Payment failed with code {code}"
-            }
-            return render(request, 'error_payment.html', context)
+        return render(request, "success_payment.html", {"donor": donor})

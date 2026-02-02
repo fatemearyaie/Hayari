@@ -36,41 +36,6 @@ class DonateSerializer(serializers.ModelSerializer):
         model = Donor
         fields = ['amount']
 
-    def validate(self, attrs):
-        amount = attrs['amount']
-        user = self.context['request'].user
-        fundraising = self.context["fundraising"]
-
-        charge_wallet = self.context.get("charge_wallet", True)
-
-        if not fundraising.is_available:
-            raise serializers.ValidationError({"detail": "this fundraising is not available anymore"})
-
-        # فقط وقتی از کیف پول پرداخت میشه
-        if charge_wallet:
-            if user.balance < amount:
-                raise serializers.ValidationError({"detail": "Insufficient balance"})
-
-        return attrs
-
-    def create(self, validated_data):
-        request = self.context["request"]
-        user = request.user
-        fundraising = self.context["fundraising"]
-        amount = validated_data["amount"]
-
-        with transaction.atomic():
-            user = CustomUser.objects.select_for_update().get(pk=user.pk)
-
-            donor = Donor.objects.create(
-                user=user,
-                amount=amount,
-                xp=fundraising.each_don_xp,
-                fundraising=fundraising,
-            )
-
-        return donor
-
 
 
 class DonorSerializer(serializers.ModelSerializer):
