@@ -54,7 +54,7 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
             Donor.objects
             .filter(user=request.user)
             .select_related("fundraising")
-            .order_by("-created_at")
+            .order_by("-datetime")
         )
 
         page = self.paginate_queryset(queryset)
