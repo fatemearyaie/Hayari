@@ -159,7 +159,7 @@ class PaymentViewSet(viewsets.ViewSet):
         resp = requests.post(ZP_API_VERIFY, json=payload).json()
         code = resp["data"]["code"]
 
-        if code not in [100, 101]:
+        if code is not [100,]:
             transaction.transaction_status = Transaction.TransactionStatus.CANCEL
             transaction.save(update_fields=["transaction_status"])
             return render(request, "error_payment.html")

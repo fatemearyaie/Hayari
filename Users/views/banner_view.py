@@ -10,13 +10,6 @@ from Users.serializers.banner_serializers import HomeBannerSerializer
 from Users.services.banner_cache import get_cached_banners
 
 
-class BannerView(APIView):
-    throttle_scope = 'custom'
-    def get(self, request):
-        banners = get_cached_banners()
-        return Response(banners)
-
-
 class HomeBannerView(ReadOnlyModelViewSet):
     queryset = HomeBanner.objects.all()
     serializer_class = HomeBannerSerializer
