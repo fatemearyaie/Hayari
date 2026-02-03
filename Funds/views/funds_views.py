@@ -102,7 +102,7 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
 
         if not amount:
             return Response(
-                {"detail": "Amount is required."},
+                {"detail": "مقدار اهدا را وارد کنید"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -113,7 +113,7 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
         )
 
         return Response(
-            {"status": "Donation successful"},
+            {"status": "اهدا با موفقیت انجام شد"},
             status=status.HTTP_200_OK,
         )
 
