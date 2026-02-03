@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
 from Funds.models import FundRaising, Donor
+from Funds.services.donation import donate_fundraising
 from Hayari.settings.base import MERCHANT
 from Users.models.users_models import CustomUser
 from Users.models.transactions_models import Transaction
@@ -22,7 +23,7 @@ from django.db import transaction as db_transaction
 ZP_API_REQUEST = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
 ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
-CallbackURL = 'http://localhost:8000/api/v1/users/zarinpal/verify/'
+CallbackURL = 'http://api.hayari.app/api/v1/users/zarinpal/verify/'
 
 
 class TransactionView(viewsets.ReadOnlyModelViewSet):
@@ -64,6 +65,12 @@ class PaymentViewSet(viewsets.ViewSet):
                     fundraising=fundraising,
                     amount=amount,
                     xp=fundraising.each_don_xp,
+                )
+
+                donate_fundraising(
+                    user=user,
+                    fundraising=fundraising,
+                    amount=amount
                 )
 
                 return Response({
@@ -164,6 +171,13 @@ class PaymentViewSet(viewsets.ViewSet):
                 fundraising=transaction.fundraising,
                 amount=transaction.wallet_used + transaction.amount,
                 xp=transaction.fundraising.each_don_xp
+            )
+
+            donate_fundraising(
+                user=user,
+                fundraising_id=transaction.fundraising.id,
+                amount=donor.amount
+
             )
 
         return render(request, "success_payment.html", {"donor": donor})

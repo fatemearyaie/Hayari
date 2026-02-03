@@ -12,24 +12,9 @@ from Funds.services.list_cache import bump_version
 
 
 @transaction.atomic
-def donate_fundraising(*, user, fundraising_id, amount, charge_wallet=True, request=None):
-    fundraising = get_object_or_404(FundRaising, pk=fundraising_id)
+def donate_fundraising(*, user, fundraising_id, amount):
 
     amount = Decimal(amount)
-
-    if request is None:
-        request = SimpleNamespace(user=user, data={"amount": amount})
-
-    serializer = DonateSerializer(
-        data={"amount": amount},
-        context={
-            "request": request,
-            "fundraising": fundraising,
-            "charge_wallet": charge_wallet,
-        },
-    )
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
 
     FundRaising.objects.filter(pk=fundraising_id).update(
         current_donation=F("current_donation") + amount
