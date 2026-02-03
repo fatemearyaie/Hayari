@@ -57,7 +57,6 @@ class PaymentViewSet(viewsets.ViewSet):
             pay_from_wallet = min(wallet_balance, amount)
             pay_from_gateway = amount - pay_from_wallet
 
-            # اگر کل مبلغ از ولت بود → همینجا verify داخلی
             if pay_from_gateway == 0:
                 user.balance -= amount
                 user.save()
@@ -69,13 +68,7 @@ class PaymentViewSet(viewsets.ViewSet):
                     xp=fundraising.each_don_xp,
                 )
 
-                Transaction.objects.create(
-                    user=user,
-                    fundraising=fundraising,
-                    amount=amount,
-                    transaction_status=Transaction.TransactionStatus.COMPLETE,
-                    from_wallet=True,
-                )
+
 
                 return Response({
                     "from_wallet": True,
