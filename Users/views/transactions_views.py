@@ -47,7 +47,7 @@ class PaymentViewSet(viewsets.ViewSet):
         amount = Decimal(request.data.get("amount", 0))
 
         if amount <= 0:
-            return Response({"مبلغ": "مبلغ را وارد کنید. "})
+            return Response({"error": "amount > 0"})
 
         fundraising = get_object_or_404(FundRaising, pk=fundraising_id)
 
@@ -72,6 +72,7 @@ class PaymentViewSet(viewsets.ViewSet):
                     "pay_from_gateway": 0,
                 })
 
+            # اگر نیاز به درگاه بود
             pay_from_gateway = amount - wallet_balance
 
             tx = Transaction.objects.create(
@@ -82,6 +83,7 @@ class PaymentViewSet(viewsets.ViewSet):
                 transaction_status=Transaction.TransactionStatus.PENDING,
             )
 
+        # استفاده از reverse برای سازگاری با router
         payment_url = request.build_absolute_uri(
             reverse('zarinpal-request', kwargs={'pk': tx.id}, request=request)
         )
