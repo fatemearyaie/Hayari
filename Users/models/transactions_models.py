@@ -36,6 +36,7 @@ class Transaction(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     from_wallet = models.BooleanField(default=True)
+    wallet_used = models.DecimalField(max_digits=18, decimal_places=0, default=0)
 
     fundraising = models.ForeignKey(FundRaising, on_delete=models.SET_NULL, null=True, blank=True)
 
