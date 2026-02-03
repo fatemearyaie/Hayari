@@ -58,6 +58,16 @@ class PaymentViewSet(viewsets.ViewSet):
 
             if amount <= wallet_balance:
                 user.balance = F("balance") - amount
+
+                tx = Transaction.objects.create(
+                    user=user,
+                    fundraising=fundraising,
+                    amount=amount,
+                    wallet_used=wallet_balance,
+                    transaction_status=Transaction.TransactionStatus.COMPLETE,
+                    description=f'پرداخت بابت حمایت'
+                )
+
                 user.save(update_fields=["balance"])
 
                 donor = Donor.objects.create(
@@ -87,6 +97,7 @@ class PaymentViewSet(viewsets.ViewSet):
                 amount=pay_from_gateway,
                 wallet_used=wallet_balance,
                 transaction_status=Transaction.TransactionStatus.PENDING,
+                description=f'پرداخت بابت حمایت'
             )
 
         payment_url = request.build_absolute_uri(

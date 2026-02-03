@@ -1,22 +1,15 @@
 from django.db.models import Sum, Count
-from django.utils import timezone
-from datetime import timedelta
-from django.db import transaction
-from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, filters, status, mixins
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
-
 from Funds.services.donation import donate_fundraising
-from Funds.services.list_cache import cached_list, bump_version
-from Notification.services.send_notification import send_notification
+from Funds.services.list_cache import cached_list
 from Funds.models.funds_models import FundRaising, Donor
 from Funds.serializers.funds_serializers import FundRaisingSerializer, FundRaisingDetailSerializer, DonateSerializer, \
     DonorSerializer, MyDonoationSerializer, MyDonationAnalyticsSerializer
-from Users.models.users_models import XPTracker, CustomUser
-from Users.models.transactions_models import Transaction
+
 
 # Create your views here.
 class FundRaisingGV(

@@ -1,9 +1,9 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, TabularInline
 
 from Funds.models import FundRaising, FundImage, Donor
 
-class FundImageInline(admin.TabularInline):
+class FundImageInline(TabularInline):
     model = FundImage
     extra = 1
     fields = ['image', 'Fund']

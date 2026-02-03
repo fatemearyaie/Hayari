@@ -25,11 +25,6 @@ class FundRaisingDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = FundRaising
         fields = ['title','current_donation','city','each_don_xp','images','description','total_amount','start_date','end_date','latitude','longitude','website']
-from rest_framework import serializers
-from django.db import transaction
-from Funds.models.funds_models import Donor
-from Users.models import CustomUser
-
 
 class DonateSerializer(serializers.ModelSerializer):
     class Meta:

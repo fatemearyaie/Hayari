@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.contrib.admin import ModelAdmin
+from unfold.admin import ModelAdmin
 
 from Notification.models.notification_models import UserNotification, UserFCMToken
 
@@ -13,7 +13,7 @@ class UserNotificationAdmin(ModelAdmin):
 
 
 @admin.register(UserFCMToken)
-class UserFCMTokenAdmin(admin.ModelAdmin):
+class UserFCMTokenAdmin(ModelAdmin):
     list_display = (
         'id',
         'user',

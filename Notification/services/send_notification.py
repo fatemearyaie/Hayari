@@ -3,18 +3,18 @@ from Notification.models.notification_models import UserNotification
 
 def get_title(message_type):
     titles = {
-        'ad_accepted': 'Ad Accepted',
-        'donation_success': 'Donation Successful',
-        'ad_rejected': 'Ad Rejected',
+        'ad_accepted': 'تبلیغ تایید شد',
+        'donation_success': 'اهدا انجام شد',
+        'ad_rejected': 'تبلیغ رد شد',
     }
     return titles.get(message_type, 'New Message')
 
 
 def get_description(message_type):
     descriptions = {
-        'ad_accepted': 'Your Ad has been accepted',
-        'donation_success': 'Your donation was completed successfully',
-        'ad_rejected': 'Your Ad has been Rejected!',
+        'ad_accepted': 'تبلیغ شما تایید شد',
+        'donation_success': 'اهدای شما با موفقیت انجام شد',
+        'ad_rejected': 'تبلیغ شما رد شد!',
     }
     return descriptions.get(message_type, '')
 

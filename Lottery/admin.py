@@ -3,9 +3,10 @@ from django.contrib import admin
 from django.db import transaction
 from Lottery.models.lottery_models import Lottery, LotteryRewards
 
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, TabularInline
 
-class LotteryRewardsInline(admin.TabularInline):
+
+class LotteryRewardsInline(TabularInline):
     model = LotteryRewards
     extra = 0
     ordering = ('place',)
