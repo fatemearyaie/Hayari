@@ -18,7 +18,7 @@ class FundRaisingSerializer(serializers.ModelSerializer):
         model = FundRaising
         fields =['id','title','current_donation','city','each_don_xp','images',
                  'start_date','end_date','description','is_available',
-                 'latitude','longitude','website','total_amount']
+                 'latitude','longitude','website','total_amount', 'created_at']
 class FundRaisingDetailSerializer(serializers.ModelSerializer):
     city = CitySerializer()
     images = FundImagesSerializer(source='fundimage_set', many=True)

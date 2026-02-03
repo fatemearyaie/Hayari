@@ -1,4 +1,6 @@
 from django.db import models, transaction, connection
+from django.utils import timezone
+
 from Users.models import CustomUser
 from Users.models.users_models import City
 
@@ -17,6 +19,9 @@ class FundRaising(models.Model):
     longitude = models.FloatField(null=True, blank=True)
     website = models.URLField(null=True, blank=True)
     each_don_xp = models.PositiveIntegerField()
+
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         verbose_name = 'Fund Raising'
@@ -58,6 +63,9 @@ class Donor(models.Model):
     place = models.PositiveIntegerField(editable=False)
     datetime = models.DateTimeField(auto_now_add=True)
     xp = models.PositiveIntegerField(default=0)
+
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
 
     def save(self, *args, **kwargs):
