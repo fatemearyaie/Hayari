@@ -13,7 +13,7 @@ class CustomUserAdmin(ModelAdmin):
     list_display = ['username', 'name','total_score','month_score', 'balance']
     search_fields = ['username', 'name', 'email', 'phone']
     list_filter = ['total_score', 'version', 'date_joined']
-    fileds = ['username', 'name', 'phone', 'email', 'image', 'total_score', 'month_score',
+    fields = ['username', 'name', 'phone', 'email', 'image', 'total_score', 'month_score',
               'balance', 'description']
 
 @admin.register(OTP)
