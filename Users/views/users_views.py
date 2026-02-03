@@ -44,12 +44,12 @@ class UserProfileView(APIView):
     throttle_scope = 'user'
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        user = CustomUser.objects.filter(id=request.user.id)
+        user = CustomUser.objects.get(id=request.user.id)
         serializer = UserProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request):
-        user = CustomUser.objects.filter(id=request.user.id)
+        user = CustomUser.objects.get(id=request.user.id)
         serializer = UserProfileSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
