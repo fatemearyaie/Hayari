@@ -20,7 +20,7 @@ class UserNotificationViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['post'])
     def mark_all_read(self, request):
         updated_count = UserNotification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-        return Response({'all read count': updated_count}, status=status.HTTP_200_OK)
+        return Response({'پیام خوانده شده': updated_count}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def mark_as_read(self, request, pk=None):
@@ -28,10 +28,10 @@ class UserNotificationViewSet(viewsets.ReadOnlyModelViewSet):
         if not notification.is_read:
             notification.is_read = True
             notification.save(update_fields=['is_read'])
-        return Response('one notification read',status=status.HTTP_200_OK)
+        return Response('یک پیام خوانده شد',status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'])
     def unread_count(self, request):
         count = UserNotification.objects.filter(user=request.user, is_read=False).count()
-        return Response({'unread count': count}, status=status.HTTP_200_OK)
+        return Response({'خوانده نشده ها': count}, status=status.HTTP_200_OK)
 

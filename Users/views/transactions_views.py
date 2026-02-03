@@ -69,7 +69,7 @@ class PaymentViewSet(viewsets.ViewSet):
 
                 donate_fundraising(
                     user=user,
-                    fundraising=fundraising,
+                    fundraising_id=fundraising.id,
                     amount=amount
                 )
 
@@ -79,7 +79,6 @@ class PaymentViewSet(viewsets.ViewSet):
                     "pay_from_gateway": 0,
                 })
 
-            # اگر نیاز به درگاه بود
             pay_from_gateway = amount - wallet_balance
 
             tx = Transaction.objects.create(
@@ -90,7 +89,6 @@ class PaymentViewSet(viewsets.ViewSet):
                 transaction_status=Transaction.TransactionStatus.PENDING,
             )
 
-        # استفاده از reverse برای سازگاری با router
         payment_url = request.build_absolute_uri(
             reverse('zarinpal-request', kwargs={'pk': tx.id}, request=request)
         )
@@ -131,7 +129,6 @@ class PaymentViewSet(viewsets.ViewSet):
         transaction = get_object_or_404(Transaction, id=tx_id)
 
         if transaction.transaction_status == Transaction.TransactionStatus.COMPLETE:
-            # جلوگیری از double verify
             donor = Donor.objects.filter(
                 user=transaction.user, fundraising=transaction.fundraising, amount=transaction.wallet_used + transaction.amount
             ).first()
