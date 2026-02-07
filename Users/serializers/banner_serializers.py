@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from Users.models.banner_models import Banner, HomeBanner
+from Users.models.banner_models import HomeBanner
 
 
 

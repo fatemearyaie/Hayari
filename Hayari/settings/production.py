@@ -23,7 +23,7 @@ DATABASES = {
 
 
 CORS_ALLOW_ALL_ORIGINS = False
-CSRF_TRUSTED_ORIGINS = [
+CORS_ALLOWED_ORIGIN = [
     'https://web.hayari.app',
 ]
 CORS_ALLOW_HEADERS = list(default_headers) + ['x-csrftoken']
