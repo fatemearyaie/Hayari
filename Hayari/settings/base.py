@@ -2,9 +2,10 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from decouple import config
-from celery.schedules import crontab
 from django.templatetags.static import static
-
+from django.urls import reverse_lazy
+from celery.schedules import crontab
+from django.utils.translation import gettext_lazy as _
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 FIREBASE_SERVICE_ACCOUNT_PATH = config("FIREBASE_SERVICE_ACCOUNT_PATH")
@@ -228,7 +229,7 @@ SANDBOX = True
 
 UNFOLD = {
     "DASHBOARD_CALLBACK": "Hayari.admin.dashboard.dashboard_context",
-    "SCRIPTS": [lambda request: static("../admin/js/chart.umd.min.js")],
+    "SCRIPTS": [lambda request: static("admin/js/chart.umd.min.js")],
 
     "SITE_TITLE": "Hayari",
     "SITE_HEADER": "Hayari",
@@ -238,6 +239,98 @@ UNFOLD = {
     "THEME": None,
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
+
+
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": _("Navigation"),
+                "separator": True,
+                "collapsible": False,
+                "items": [
+                    {
+                        "title": _("Dashboard"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy("admin:index"),
+                        "permission": lambda request: request.user.is_staff,
+                    },
+                ],
+            },
+            {
+                "title": _("Users"),
+                "separator": False,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("CustomUsers"),
+                        "icon": "table_view",
+                        "link": reverse_lazy("admin:Users_customuser_changelist"),
+                    },
+                    {
+                        "title": _("HomeBanner"),
+                        "icon": "table_view",
+                        "link": reverse_lazy("admin:Users_homebanner_changelist"),
+                    },
+                    {
+                        "title": _("OTP"),
+                        "icon": "table_view",
+                        "link": reverse_lazy("admin:Users_otp_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Lottery"),
+                "separator": False,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Lottery"),
+                        "icon": "table_view",
+                        "link": reverse_lazy("admin:Lottery_lottery_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Funds"),
+                "separator": False,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Fundraising"),
+                        "icon": "table_view",
+                        "link": reverse_lazy("admin:Funds_fundraising_changelist"),
+                    },
+                    {
+                        "title": _("HomeBanner"),
+                        "icon": "table_view",
+                        "link": reverse_lazy("admin:Funds_donor_changelist"),
+                    },
+
+                ],
+            },
+            {
+                "title": _("Ads"),
+                "separator": False,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Ads"),
+                        "icon": "table_view",
+                        "link": reverse_lazy("admin:Ads_advertisement_changelist"),
+                    },
+                    {
+                        "title": _("AdCategory"),
+                        "icon": "table_view",
+                        "link": reverse_lazy("admin:Ads_adcategory_changelist"),
+                    },
+
+                ],
+            },
+        ],
+    },
+
 }
 
 
