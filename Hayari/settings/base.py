@@ -303,7 +303,7 @@ UNFOLD = {
                         "link": reverse_lazy("admin:Funds_fundraising_changelist"),
                     },
                     {
-                        "title": _("HomeBanner"),
+                        "title": _("Donors"),
                         "icon": "table_view",
                         "link": reverse_lazy("admin:Funds_donor_changelist"),
                     },
