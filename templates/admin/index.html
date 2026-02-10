@@ -2,70 +2,358 @@
 {% load i18n %}
 
 {% block content %}
-<div class="container mx-auto space-y-8">
+<div class="container mx-auto space-y-10">
 
-  <section class="rounded-2xl border p-6">
-    <h2 class="text-xl font-semibold">{% trans "Fundraising" %}</h2>
-    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Today" %}</div>
-        <div class="text-3xl font-bold">{{ kpis.funds.today|default:0 }}</div>
+  <!-- ===================== Registrations (Users) ===================== -->
+  <section>
+    <div class="mb-3 flex items-end justify-between">
+      <h2 class="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+        {% trans "Registrations" %}
+      </h2>
+      <p class="text-sm text-gray-700 dark:text-gray-300">
+        {% trans "CustomUser counts" %}
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+
+      <!-- LEFT: 2×2 KPI grid -->
+      <div class="md:col-span-2">
+        <div class="grid grid-cols-2 gap-6">
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Today" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.users.today|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "This month" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.users.month|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "This year" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.users.year|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Total" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.users.total|default:0 }}
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "This week" %}</div>
-        <div class="text-3xl font-bold">{{ kpis.funds.week|default:0 }}</div>
+
+      <!-- RIGHT: chart -->
+      <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm md:col-span-4">
+        <div class="p-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{% trans "User Registrations" %}</h3>
+            <select id="users-period"
+                    class="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100">
+              <option value="daily">{% trans "Daily (90d)" %}</option>
+              <option value="monthly">{% trans "Monthly (12m)" %}</option>
+              <option value="yearly">{% trans "Yearly (5y)" %}</option>
+            </select>
+          </div>
+          <div class="mt-4 h-24">
+            <canvas id="usersChart" class="w-full h-full"></canvas>
+          </div>
+        </div>
       </div>
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Active" %}</div>
-        <div class="text-3xl font-bold">{{ kpis.funds.active|default:0 }}</div>
-      </div>
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Total" %}</div>
-        <div class="text-3xl font-bold">{{ kpis.funds.total|default:0 }}</div>
-      </div>
+
     </div>
   </section>
 
-  <section class="rounded-2xl border p-6">
-    <h2 class="text-xl font-semibold">{% trans "Donations" %}</h2>
-    <div class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Donors today" %}</div>
-        <div class="text-3xl font-bold">{{ kpis.donors.today|default:0 }}</div>
-      </div>
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Donors this week" %}</div>
-        <div class="text-3xl font-bold">{{ kpis.donors.week|default:0 }}</div>
-      </div>
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Donors total" %}</div>
-        <div class="text-3xl font-bold">{{ kpis.donors.total|default:0 }}</div>
-      </div>
+
+  <!-- ===================== Donors (NO CHART) ===================== -->
+  <section>
+    <div class="mb-3 flex items-end justify-between">
+      <h2 class="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+        {% trans "Donors" %}
+      </h2>
+      <p class="text-sm text-gray-700 dark:text-gray-300">
+        {% trans "Counts + donation amounts" %}
+      </p>
     </div>
 
-    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Amount today" %}</div>
-        <div class="text-2xl font-bold">{{ kpis.donation_sum.today|default:0 }}</div>
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+
+      <!-- LEFT: Donors count KPIs (2×2) -->
+      <div class="md:col-span-3">
+        <div class="grid grid-cols-2 gap-6">
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Today" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.donors.today|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "This month" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.donors.month|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "This year" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.donors.year|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Total" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.donors.total|default:0 }}
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Amount this week" %}</div>
-        <div class="text-2xl font-bold">{{ kpis.donation_sum.week|default:0 }}</div>
+
+      <!-- RIGHT: Donation amount KPIs (2×2) -->
+      <div class="md:col-span-3">
+        <div class="grid grid-cols-2 gap-6">
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Amount today" %}</p>
+              <div class="mt-1 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.donation_sum.today|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Amount monthly" %}</p>
+              <div class="mt-1 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.donation_sum.month|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Amount yearly" %}</p>
+              <div class="mt-1 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.donation_sum.year|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Amount total" %}</p>
+              <div class="mt-1 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.donation_sum.total|default:0 }}
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
-      <div class="rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Amount total" %}</div>
-        <div class="text-2xl font-bold">{{ kpis.donation_sum.total|default:0 }}</div>
-      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ===================== Fundraising ===================== -->
+  <section>
+    <div class="mb-3 flex items-end justify-between">
+      <h2 class="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+        {% trans "Fundraising" %}
+      </h2>
+      <p class="text-sm text-gray-700 dark:text-gray-300">
+        {% trans "Counts + progress (current vs total)" %}
+      </p>
     </div>
 
-    {% if kpis.top_fund %}
-      <div class="mt-4 rounded-xl border p-4">
-        <div class="text-sm text-gray-500">{% trans "Top fundraising" %}</div>
-        <div class="text-lg font-semibold">{{ kpis.top_fund.title }}</div>
-        <div class="text-sm">{% trans "Current donation" %}: {{ kpis.top_fund.current_donation }}</div>
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+
+      <!-- LEFT: 2×2 KPI grid -->
+      <div class="md:col-span-2">
+        <div class="grid grid-cols-2 gap-6">
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Today" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.funds.today|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "This month" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.funds.month|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Active" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.funds.active|default:0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm">
+            <div class="p-5 h-[100px] flex flex-col justify-center">
+              <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "Total" %}</p>
+              <div class="mt-1 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+                {{ kpis.funds.total|default:0 }}
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
-    {% endif %}
+
+      <!-- RIGHT: progress chart -->
+      <div class="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900 shadow-sm md:col-span-4">
+        <div class="p-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{% trans "Top fund progress" %}</h3>
+            <p class="text-sm text-gray-700 dark:text-gray-300">{% trans "100% stacked" %}</p>
+          </div>
+          <div class="mt-4 h-24">
+            <canvas id="fundsChart" class="w-full h-full"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </section>
 
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (!window.Chart) return;
+
+  // ---------- USERS CHART (context: charts.users_series) ----------
+  const usersSeries = JSON.parse(`{{ charts.users_series|safe }}`);
+  const uCtx = document.getElementById("usersChart").getContext("2d");
+  const usersSelect = document.getElementById("users-period");
+  let usersChart;
+
+  function renderUsers(mode) {
+    const series = usersSeries[mode] || { labels: [], values: [] };
+    if (usersChart) usersChart.destroy();
+
+    usersChart = new Chart(uCtx, {
+      type: "line",
+      data: {
+        labels: series.labels,
+        datasets: [{
+          label: "{{ _('Registrations') }}",
+          data: series.values,
+          tension: 0.35,
+          pointRadius: 2,
+          borderWidth: 2,
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { autoSkip: true, maxTicksLimit: 10 } },
+          y: { beginAtZero: true, precision: 0 }
+        }
+      }
+    });
+  }
+
+  usersSelect.addEventListener("change", () => renderUsers(usersSelect.value));
+  renderUsers(usersSelect.value);
+
+
+  // ---------- FUNDS CHART (context: charts.funds_progress) ----------
+  const fundsProgress = JSON.parse(`{{ charts.funds_progress|safe }}`);
+  const fCtx = document.getElementById("fundsChart").getContext("2d");
+
+  const labels = fundsProgress.labels || [];
+  const doneAbs = (fundsProgress.done || []).map(v => Number(v || 0));
+  const remainAbs = (fundsProgress.remain || []).map(v => Number(v || 0));
+  const totalAbs = doneAbs.map((d, i) => d + (remainAbs[i] || 0));
+
+  const donePct = doneAbs.map((d, i) => {
+    const t = totalAbs[i] || 0;
+    return t > 0 ? (d / t) * 100 : 0;
+  });
+  const remainPct = donePct.map(p => Math.max(0, 100 - p));
+
+  new Chart(fCtx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { data: donePct, stack: "total", borderWidth: 0, barThickness: 6 },
+        { data: remainPct, stack: "total", borderWidth: 0, barThickness: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const i = context.dataIndex;
+              const cur = doneAbs[i] || 0;
+              const rem = remainAbs[i] || 0;
+              const tot = totalAbs[i] || 0;
+              const pct = tot > 0 ? Math.round((cur / tot) * 100) : 0;
+              if (context.datasetIndex === 0) return `Current: ${cur} (${pct}%)`;
+              return `Remaining: ${rem} (Total: ${tot})`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, ticks: { autoSkip: true, maxTicksLimit: 10 } },
+        y: { stacked: true, beginAtZero: true, min: 0, max: 100, ticks: { callback: v => `${v}%` } }
+      }
+    }
+  });
+
+});
+</script>
+
 {% endblock %}
