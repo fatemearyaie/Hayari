@@ -23,7 +23,29 @@ from django.db import transaction as db_transaction
 ZP_API_REQUEST = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
 ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
-CallbackURL = 'http://api.hayari.app/api/v1/users/zarinpal/verify/'
+CallbackURL = 'http://127.0.0.1:8000/api/v1/users/zarinpal/verify/'
+
+def status_check(transaction, status, request, authority):
+    if status != "OK":
+        transaction.transaction_status = Transaction.TransactionStatus.CANCEL
+        transaction.save(update_fields=["transaction_status"])
+        return render(request, "error_payment.html")
+
+    payload = {
+        "merchant_id": MERCHANT,
+        "authority": authority,
+        "amount": int(transaction.amount),
+    }
+
+    resp = requests.post(ZP_API_VERIFY, json=payload).json()
+    code = resp["data"]["code"]
+
+    if code not in (100,):
+        transaction.transaction_status = Transaction.TransactionStatus.CANCEL
+        transaction.save(update_fields=["transaction_status"])
+        return render(request, "error_payment.html")
+
+    return None
 
 
 class TransactionView(viewsets.ReadOnlyModelViewSet):
@@ -38,6 +60,7 @@ class TransactionView(viewsets.ReadOnlyModelViewSet):
         return Transaction.objects.filter(user=self.request.user)
 
 
+
 class PaymentViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
@@ -50,8 +73,25 @@ class PaymentViewSet(viewsets.ViewSet):
         if amount <= 0:
             return Response({"error": "amount > 0"})
 
-        fundraising = get_object_or_404(FundRaising, pk=fundraising_id)
+        if not fundraising_id:
+            user = CustomUser.objects.get(pk=user.pk)
+            tx = Transaction.objects.create(
+                user=user,
+                amount=amount,
+                transaction_status=Transaction.TransactionStatus.PENDING,
+                transaction_type=Transaction.TransactionType.Deposit,
+                description=f'پرداخت بابت افزایش موجودی'
+            )
 
+            payment_url = request.build_absolute_uri(
+                reverse('zarinpal-request', kwargs={'pk': tx.id}, request=request)
+            )
+            return Response({
+                "payment_url": payment_url,
+            })
+
+
+        fundraising = get_object_or_404(FundRaising, pk=fundraising_id)
         with db_transaction.atomic():
             user = CustomUser.objects.select_for_update().get(pk=user.pk)
             wallet_balance = user.balance or Decimal(0)
@@ -69,13 +109,6 @@ class PaymentViewSet(viewsets.ViewSet):
                 )
 
                 user.save(update_fields=["balance"])
-
-                donor = Donor.objects.create(
-                    user=user,
-                    fundraising=fundraising,
-                    amount=amount,
-                    xp=fundraising.each_don_xp,
-                )
 
                 donate_fundraising(
                     user=user,
@@ -137,32 +170,45 @@ class PaymentViewSet(viewsets.ViewSet):
         authority = request.GET.get("Authority")
         status = request.GET.get("Status")
 
+        if not tx_id:
+            return Response({"detail": "transaction_id is missing"}, status=400)
+
         transaction = get_object_or_404(Transaction, id=tx_id)
 
+        # without fundraising
+        if not transaction.fundraising:
+            if transaction.transaction_status == Transaction.TransactionStatus.COMPLETE:
+                return render(request, "success_payment.html")
+
+            resp = status_check(transaction, status, request, authority)
+            if resp is not None:
+                return resp
+            with db_transaction.atomic():
+                tx = Transaction.objects.select_for_update().select_related("user").get(pk=transaction.pk)
+
+                if tx.transaction_status == Transaction.TransactionStatus.COMPLETE:
+                    return render(request, "success_payment.html")
+
+                user = CustomUser.objects.select_for_update().get(pk=tx.user_id)
+
+                tx.balance_after = user.balance
+                tx.save(update_fields=["balance_after", "transaction_status"])
+
+            return render(request, "success_payment.html")
+
+
+        # donation flow
         if transaction.transaction_status == Transaction.TransactionStatus.COMPLETE:
             donor = Donor.objects.filter(
-                user=transaction.user, fundraising=transaction.fundraising, amount=transaction.wallet_used + transaction.amount
+                user=transaction.user,
+                fundraising=transaction.fundraising,
+                amount=transaction.wallet_used + transaction.amount
             ).first()
             return render(request, "success_payment.html", {"donor": donor})
 
-        if status != "OK":
-            transaction.transaction_status = Transaction.TransactionStatus.CANCEL
-            transaction.save(update_fields=["transaction_status"])
-            return render(request, "error_payment.html")
-
-        payload = {
-            "merchant_id": MERCHANT,
-            "authority": authority,
-            "amount": int(transaction.amount),
-        }
-
-        resp = requests.post(ZP_API_VERIFY, json=payload).json()
-        code = resp["data"]["code"]
-
-        if code is not [100,]:
-            transaction.transaction_status = Transaction.TransactionStatus.CANCEL
-            transaction.save(update_fields=["transaction_status"])
-            return render(request, "error_payment.html")
+        resp = status_check(transaction, status, request, authority)
+        if resp is not None:
+            return resp
 
         with db_transaction.atomic():
             user = CustomUser.objects.select_for_update().get(pk=transaction.user.pk)
@@ -185,7 +231,8 @@ class PaymentViewSet(viewsets.ViewSet):
                 user=user,
                 fundraising_id=transaction.fundraising.id,
                 amount=donor.amount
-
             )
 
         return render(request, "success_payment.html", {"donor": donor})
+
+
