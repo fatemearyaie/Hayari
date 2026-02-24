@@ -5,7 +5,7 @@ from Ads.models.ads_models import AdSetting, AdCategory, Advertisement, AdEvent
 
 @admin.register(AdSetting)
 class AdSettingAdmin(ModelAdmin):
-    list_display = ["id", "is_available", "video_price", "video_xp", "banner_price", "banner_xp", "created_at", "updated_at"]
+    list_display = ["id", "is_available", "video_price_30", "video_price_60", "video_price_90", "video_price_120", "video_xp", "banner_price", "banner_xp", "created_at", "updated_at"]
     search_fields = []
     list_filter = ["is_available", "created_at", "updated_at"]
     ordering = ["-created_at"]

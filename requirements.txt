@@ -23,6 +23,8 @@ requests
 django_filter
 firebase-admin
 sentry-sdk
+ffmpeg
+ffprobe
 
 google-auth
 google-auth-oauthlib
