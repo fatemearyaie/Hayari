@@ -23,3 +23,6 @@ requests
 django_filter
 firebase-admin
 sentry-sdk
+
+google-auth
+google-auth-oauthlib

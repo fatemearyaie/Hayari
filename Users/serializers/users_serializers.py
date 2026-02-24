@@ -114,3 +114,32 @@ class CitySerializer(serializers.ModelSerializer):
         model = City
         fields = ['name','id']
 
+
+
+class GoogleAuthSerializer(serializers.Serializer):
+    id_token = serializers.CharField(required=False, allow_blank=False)
+    code = serializers.CharField(required=False)
+    code_verifier = serializers.CharField(required=False)
+    redirect_uri = serializers.URLField(required=False)
+
+    def validate(self, attrs):
+        if not attrs.get("id_token") and not (attrs.get("code") and attrs.get("code_verifier") and attrs.get("redirect_uri")):
+            raise serializers.ValidationError("Provide either id_token or (code, code_verifier, redirect_uri).")
+        return attrs
+
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ["email"]
+
+    def create(self, validated_data):
+        email = (validated_data.get("email") or "").strip().lower()
+        if not email:
+            raise serializers.ValidationError({"email": "email is required"})
+
+        user = CustomUser(username=email, email=email, is_active=True)
+        user.set_unusable_password()
+        user.save()
+        return user

@@ -9,7 +9,17 @@ from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# --- Google OAuth login ---
+GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID")
 
+GOOGLE_ALLOWED_CLIENT_IDS = [
+    config("GOOGLE_WEB_CLIENT_ID"),
+    config("GOOGLE_ANDROID_CLIENT_ID"),
+]
+GOOGLE_WEB_CLIENT_ID = config("GOOGLE_WEB_CLIENT_ID")
+GOOGLE_WEB_CLIENT_SECRET = config("GOOGLE_WEB_CLIENT_SECRET")  # used only for web code exchange
+GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
+GOOGLE_ISSUERS = {"https://accounts.google.com", "accounts.google.com"}
 
 
 FIREBASE_SERVICE_ACCOUNT_PATH = config("FIREBASE_SERVICE_ACCOUNT_PATH")
