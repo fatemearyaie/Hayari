@@ -19,7 +19,7 @@ if SENTRY_DSN:
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
         send_default_pii=True,
-        traces_sample_rate=0.0,
+        traces_sample_rate=1.0, # Track 100% of incoming requests
         profile_session_sample_rate=0.0,
         profile_lifecycle="trace",
     )
