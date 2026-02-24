@@ -34,4 +34,4 @@ def apply_balance_on_complete(sender, instance, **kwargs):
                 balance=F("balance") - amount
             )
             if updated == 0:
-                instance.transaction_status = Transaction.TransactionStatus.CANCEL
+                instance.transaction_status = Transaction.TransactionStatus.COMPLETE

@@ -45,6 +45,7 @@ def status_check(transaction, status, request, authority):
         transaction.save(update_fields=["transaction_status"])
         return render(request, "error_payment.html")
 
+
     return None
 
 
@@ -98,17 +99,20 @@ class PaymentViewSet(viewsets.ViewSet):
 
             if amount <= wallet_balance:
                 user.balance = F("balance") - amount
+                user.save(update_fields=["balance"])
+                user.refresh_from_db(fields=["balance"])
 
                 tx = Transaction.objects.create(
                     user=user,
                     fundraising=fundraising,
                     amount=amount,
                     wallet_used=wallet_balance,
+                    balance_after=user.balance,
                     transaction_status=Transaction.TransactionStatus.COMPLETE,
                     description=f'پرداخت بابت حمایت'
                 )
 
-                user.save(update_fields=["balance"])
+
 
                 donate_fundraising(
                     user=user,
@@ -181,17 +185,18 @@ class PaymentViewSet(viewsets.ViewSet):
                 return render(request, "success_payment.html")
 
             resp = status_check(transaction, status, request, authority)
+
             if resp is not None:
                 return resp
             with db_transaction.atomic():
                 tx = Transaction.objects.select_for_update().select_related("user").get(pk=transaction.pk)
-
                 if tx.transaction_status == Transaction.TransactionStatus.COMPLETE:
                     return render(request, "success_payment.html")
 
                 user = CustomUser.objects.select_for_update().get(pk=tx.user_id)
 
                 tx.balance_after = user.balance
+                tx.transaction_status = Transaction.TransactionStatus.COMPLETE
                 tx.save(update_fields=["balance_after", "transaction_status"])
 
             return render(request, "success_payment.html")
@@ -217,6 +222,7 @@ class PaymentViewSet(viewsets.ViewSet):
                 user.balance = F("balance") - transaction.wallet_used
                 user.save(update_fields=["balance"])
 
+            transaction.balance_after = user.balance
             transaction.transaction_status = Transaction.TransactionStatus.COMPLETE
             transaction.save(update_fields=["transaction_status"])
 
