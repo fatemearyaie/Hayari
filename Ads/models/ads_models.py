@@ -5,7 +5,10 @@ from Users.models import CustomUser, City
 
 # Create your models here.
 class AdSetting(models.Model):
-    video_price = models.DecimalField(max_digits=18,decimal_places=0)
+    video_price_30 = models.DecimalField(max_digits=18,decimal_places=0, default=0)
+    video_price_60 = models.DecimalField(max_digits=18,decimal_places=0, default=0)
+    video_price_90 = models.DecimalField(max_digits=18, decimal_places=0, default=0)
+    video_price_120 = models.DecimalField(max_digits=18, decimal_places=0, default=0)
     video_xp = models.PositiveIntegerField(null=False, blank=False)
     banner_price = models.DecimalField(max_digits=18,decimal_places=0)
     banner_xp = models.PositiveIntegerField(null=False, blank=False)
