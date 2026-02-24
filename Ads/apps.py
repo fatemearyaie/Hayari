@@ -7,3 +7,4 @@ class AdsConfig(AppConfig):
 
     def ready(self):
         import Ads.signals.adevent_signal
+        import Ads.signals.refund_signal

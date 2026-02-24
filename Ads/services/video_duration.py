@@ -2,47 +2,31 @@ import json
 import subprocess
 import tempfile
 
+
 class VideoDurationError(Exception):
     pass
 
 
 def get_video_duration_seconds(uploaded_file) -> float:
     """
-    Returns video duration in seconds (float)
-    Supports both TemporaryUploadedFile and InMemoryUploadedFile
+    Duration from UploadedFile (TemporaryUploadedFile or InMemoryUploadedFile)
     """
-
-    # file on disk
+    # file already on disk
     if hasattr(uploaded_file, "temporary_file_path"):
-        path = uploaded_file.temporary_file_path()
-        return _ffprobe_duration(path)
+        return get_video_duration_seconds_from_path(uploaded_file.temporary_file_path())
 
-    # file on memory, store permanently
+    # file in memory -> write to temp then probe
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=True) as tmp:
         for chunk in uploaded_file.chunks():
             tmp.write(chunk)
         tmp.flush()
-        return _ffprobe_duration(tmp.name)
+        return get_video_duration_seconds_from_path(tmp.name)
 
 
-def get_duration_bucket(seconds: float, tolerance: float = 1.5) -> int:
+def get_video_duration_seconds_from_path(path: str) -> float:
     """
-    Convert seconds into 30 / 60 / 90 / 120 bucket
+    Duration from a local file path (e.g., instance.video.path)
     """
-
-    if seconds <= 30 + tolerance:
-        return 30
-    if seconds <= 60 + tolerance:
-        return 60
-    if seconds <= 90 + tolerance:
-        return 90
-    if seconds <= 120 + tolerance:
-        return 120
-
-    raise VideoDurationError("ویدیو بیشتر از 120 ثانیه است.")
-
-
-def _ffprobe_duration(path: str) -> float:
     cmd = [
         "ffprobe",
         "-v", "error",
@@ -61,3 +45,19 @@ def _ffprobe_duration(path: str) -> float:
         return float(data["format"]["duration"])
     except Exception:
         raise VideoDurationError("مدت زمان ویدیو قابل خواندن نیست.")
+
+
+def get_duration_bucket(seconds: float, tolerance: float = 1.5) -> int:
+    """
+    Convert seconds into 30 / 60 / 90 / 120 bucket
+    """
+    if seconds <= 30 + tolerance:
+        return 30
+    if seconds <= 60 + tolerance:
+        return 60
+    if seconds <= 90 + tolerance:
+        return 90
+    if seconds <= 120 + tolerance:
+        return 120
+
+    raise VideoDurationError("ویدیو بیشتر از 120 ثانیه است.")
