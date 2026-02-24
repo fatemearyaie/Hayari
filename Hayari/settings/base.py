@@ -6,23 +6,9 @@ from django.templatetags.static import static
 from django.urls import reverse_lazy
 from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-
-# --- Sentry initialization ---
-SENTRY_DSN = config("SENTRY_DSN")
-if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        integrations=[DjangoIntegration()],
-        send_default_pii=True,
-        traces_sample_rate=1.0, # Track 100% of incoming requests
-        profile_session_sample_rate=0.0,
-        profile_lifecycle="trace",
-    )
 
 
 

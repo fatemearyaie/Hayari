@@ -2,6 +2,8 @@ import os
 from decouple import config
 from .base import *
 from corsheaders.defaults import default_headers
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 ALLOWED_HOSTS=['84.200.24.159','api.hayari.app','hayari.app','localhost','127.0.0.1','0.0.0.0']
 
@@ -40,3 +42,18 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+
+# --- Sentry initialization ---
+SENTRY_DSN = config("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        send_default_pii=True,
+        traces_sample_rate=1.0, # Track 100% of incoming requests
+        profile_session_sample_rate=0.0,
+        profile_lifecycle="trace",
+    )
+
