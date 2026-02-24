@@ -33,5 +33,9 @@ def send_fcm_on_notification_created(sender, instance: UserNotification, created
         "title": str(instance.title),
         "message": str(instance.description or ""),
         "fcm": str(fcm_obj.token),
+        "extra": {
+            "type": "notification",
+            "notification_id": str(instance.id),
+        }
     }
     send_firebase_task.delay(data)

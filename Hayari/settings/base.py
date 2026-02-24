@@ -1,13 +1,24 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+
+import firebase_admin
 from decouple import config
 from django.templatetags.static import static
 from django.urls import reverse_lazy
 from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
+from firebase_admin import credentials
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+
+# --- Firebase initialization (common) ---
+FIREBASE_SERVICE_ACCOUNT_PATH = os.path.join(BASE_DIR, 'hayari-firebase.json')
+# Firebase initialization will be handled in environment-specific settings
+if not firebase_admin._apps:
+    cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_PATH)
+    firebase_admin.initialize_app(cred)
 
 # --- Google OAuth login ---
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID")
@@ -22,7 +33,6 @@ GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
 GOOGLE_ISSUERS = {"https://accounts.google.com", "accounts.google.com"}
 
 
-FIREBASE_SERVICE_ACCOUNT_PATH = config("FIREBASE_SERVICE_ACCOUNT_PATH")
 
 # --- Logging ---
 LOG_DIR = BASE_DIR / "logs"
