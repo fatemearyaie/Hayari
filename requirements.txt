@@ -25,6 +25,6 @@ firebase-admin
 sentry-sdk
 ffmpeg
 ffprobe
-
+django-location-field
 google-auth
 google-auth-oauthlib

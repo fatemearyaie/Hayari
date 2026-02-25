@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     "django.contrib.humanize",
+    "location_field",
 
     'Users',
     'Funds',
