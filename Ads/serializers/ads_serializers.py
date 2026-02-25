@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 from rest_framework import serializers
 from Ads.models.ads_models import AdSetting, Advertisement, AdCategory, AdEvent
 from Users.models import City, Transaction
@@ -171,30 +172,36 @@ class AdEventSerializer(serializers.ModelSerializer):
         user = validated_data['user']
         ad = validated_data['ad']
         event_type = validated_data['event_type']
+        today = timezone.localdate()
 
         with transaction.atomic():
-            event, created = AdEvent.objects.get_or_create(
+            Advertisement.objects.select_for_update().only("id").get(pk=ad.pk)
+
+            already_today = AdEvent.objects.filter(
+                user_id=user.id,
+                ad_id=ad.id,
+                event_date=today,
+            ).exists()
+
+            if already_today:
+                raise serializers.ValidationError({'اخطار': 'شما امروز برای این تبلیغ قبلاً رویداد ثبت کرده‌اید.'})
+
+            event = AdEvent.objects.create(
                 user=user,
                 ad=ad,
-                defaults={'event_type': event_type}
+                event_type=event_type,
+                event_date=today,
             )
 
-            if not created:
-                raise serializers.ValidationError({
-                    'اخطار': 'این تبلیغ قبلا توسط شما دیده شده است.'
-                })
-
-            if event_type == 'view':
+            if event_type == AdEvent.EventType.View:
                 Advertisement.objects.filter(pk=ad.pk).update(
                     total_view=F('total_view') + 1
                 )
-            elif event_type == 'click':
+            elif event_type == AdEvent.EventType.Click:
                 Advertisement.objects.filter(pk=ad.pk).update(
                     total_click=F('total_click') + 1
                 )
             else:
-                raise serializers.ValidationError({
-                    'event_type': 'Invalid event type.'
-                })
+                raise serializers.ValidationError({'event_type': 'Invalid event type.'})
 
         return event

@@ -1,6 +1,7 @@
 from django.db import transaction
-from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.db.models.signals import post_save
+
 from Ads.models.ads_models import AdEvent, AdSetting, Advertisement
 from Users.models.users_models import XPTracker
 
@@ -10,27 +11,16 @@ def create_xptracker_on_ad_event(sender, instance: AdEvent, created: bool, **kwa
     if not created:
         return
 
-    if instance.event_type != AdEvent.EventType.View:
-        return
-
     with transaction.atomic():
-        already_rewarded = AdEvent.objects.filter(
-            user_id=instance.user_id,
-            ad_id=instance.ad_id,
-        ).exclude(pk=instance.pk).exists() #exclude current event
-
-        if already_rewarded:
-            return
-
         setting = (AdSetting.objects
                    .filter(is_available=True)
-                   .order_by('-updated_at', '-id')
-                   .only('video_xp', 'banner_xp')
+                   .order_by("-updated_at", "-id")
+                   .only("video_xp", "banner_xp")
                    .first())
         if not setting:
             return
 
-        ad = Advertisement.objects.only('id', 'video').get(pk=instance.ad_id)
+        ad = Advertisement.objects.only("id", "video").get(pk=instance.ad_id)
         is_video_ad = bool(ad.video)
 
         xp_value = setting.video_xp if is_video_ad else setting.banner_xp

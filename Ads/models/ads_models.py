@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 from Users.models import CustomUser, City
 
@@ -72,6 +73,12 @@ class Advertisement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+    def save(self, *args, **kwargs):
+        if not self.event_date:
+            self.event_date = timezone.localdate()
+        super().save(*args, **kwargs)
+
     class Meta:
         verbose_name = 'Advertisement'
         verbose_name_plural = 'Advertisements'
@@ -92,6 +99,8 @@ class AdEvent(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     ad = models.ForeignKey(Advertisement, on_delete=models.CASCADE)
     event_type = models.CharField(choices=EventType.choices, default=EventType.View)
+    event_date = models.DateField(db_index=True, editable=False, null=True, blank=True)
+
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

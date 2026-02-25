@@ -9,8 +9,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-
-from Ads.models.ads_models import AdSetting, AdCategory, Advertisement
+from django.utils import timezone
+from django.db.models import OuterRef, Exists
+from Ads.models.ads_models import AdSetting, AdCategory, Advertisement, AdEvent
 from Ads.serializers.ads_serializers import AdSettingSerializer, AdCategorySerializer, CreateAdvertisementSerializer, \
     UpdateAdvertisementSerializer, AdvertisementReadSerializer, MyAdvertisementSerializer, AdEventSerializer
 
@@ -93,20 +94,31 @@ class AdvertisementViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         event_obj = serializer.save()
 
-        return Response(AdEventSerializer(event_obj).data)
+        return Response(AdEventSerializer(event_obj, context={"request": request, "ad": ad}).data)
 
 
 class AllAdvertisementViewSet(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = AdvertisementReadSerializer
 
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter, ]
-    filterset_fields = ['category','created_at','city']
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['category', 'created_at', 'city']
     search_fields = ['title']
     ordering_fields = ['created_at']
     ordering = ['created_at']
 
     def get_queryset(self):
-        return Advertisement.objects.filter(status=Advertisement.AdStatus.Enable).order_by('-created_at').select_related('city','user','category')
+        today = timezone.localdate()
+        user_id = self.request.user.id
 
+        qs = (Advertisement.objects
+              .filter(status=Advertisement.AdStatus.Enable)
+              .select_related('city', 'user', 'category')
+              .order_by('-created_at'))
 
+        any_event_today = AdEvent.objects.filter(
+            user_id=user_id,
+            ad_id=OuterRef('pk'),
+            event_date=today,
+        )
+        return qs.annotate(_has_event_today=Exists(any_event_today)).filter(_has_event_today=False)
