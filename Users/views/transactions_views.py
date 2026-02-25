@@ -23,7 +23,7 @@ from django.db import transaction as db_transaction
 ZP_API_REQUEST = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZP_API_STARTPAY = "https://sandbox.zarinpal.com/pg/StartPay/"
 ZP_API_VERIFY = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
-CallbackURL = 'http://127.0.0.1:8000/api/v1/users/zarinpal/verify/'
+CallbackURL = 'http://api.hayari.app/api/v1/users/zarinpal/verify/'
 
 def status_check(transaction, status, request, authority):
     if status != "OK":
