@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.humanize.templatetags.humanize import intcomma
 from unfold.admin import ModelAdmin, TabularInline
 
 from Funds.models import FundRaising, FundImage, Donor
@@ -10,10 +11,14 @@ class FundImageInline(TabularInline):
 
 @admin.register(FundRaising)
 class FundRaisingAdmin(ModelAdmin):
+    def total_amount_comma(self, obj):
+        return intcomma(obj.total_amount)
+    total_amount_comma.admin_order_field = 'total_amount'
+    total_amount_comma.short_description = 'total_amount'
     inlines = [FundImageInline]
-    list_display = ['title','total_amount','current_donation','is_available','website']
+    list_display = ['title','total_amount_comma','current_donation','is_available','website']
     list_filter = ['start_date','end_date','is_available','total_amount','current_donation']
-    search_fields = ['is_available','start_date','end_date', 'total_amount', 'title','current_donation']
+    search_fields = ['total_amount', 'title','current_donation']
 
 @admin.register(FundImage)
 class FundImage(ModelAdmin):
@@ -22,6 +27,10 @@ class FundImage(ModelAdmin):
 
 @admin.register(Donor)
 class DonorAdmin(ModelAdmin):
-    list_display = ['user','amount','place','datetime','xp']
+    def donor_amount(self, obj):
+        return intcomma(obj.amount)
+    donor_amount.admin_order_field = 'amount'
+    donor_amount.short_description = 'amount'
+    list_display = ['user','donor_amount','place','datetime','xp']
     list_filter = ['amount','datetime']
-    search_fields = ['amount', 'datetime']
+    search_fields = ['user__username','amount']
