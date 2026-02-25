@@ -50,3 +50,9 @@ class MyDonoationSerializer(serializers.ModelSerializer):
 class MyDonationAnalyticsSerializer(serializers.Serializer):
     count = serializers.IntegerField()
     total_amount = serializers.IntegerField()
+
+
+
+class UserDonationAnalyticsSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    total_amount = serializers.DecimalField(max_digits=12, decimal_places=0)
