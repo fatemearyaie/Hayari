@@ -1,35 +1,39 @@
 services:
-  django:
+  db:
+    image: postgres:15
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    container_name: hayari-db
+
+  redis:
+    image: redis:7
+    container_name: hayri-redis
+    ports:
+      - "6379:6379"
+
+  hayari:
     build:
       context: .
       args:
-        DJANGO_SETTINGS_MODULE: Hayari.settings.production
-    container_name: hayari
+        DJANGO_SETTINGS_MODULE: Hayari.settings.local
     volumes:
       - ./:/app
+    container_name: hayari-django
     ports:
-      - "8000:8000"
+      - "49327:8000"
     env_file:
       - .env
     environment:
-      - DJANGO_SETTINGS_MODULE=Hayari.settings.production
+      - DJANGO_SETTINGS_MODULE=Hayari.settings.local
       - RUN_MIGRATIONS=1
     depends_on:
+      - db
       - redis
-    networks:
-      - hayari-network
-    extra_hosts:
-      - "host.docker.internal:172.17.0.1"
-    command: >
-      gunicorn Hayari.asgi:application
-          -k uvicorn.workers.UvicornWorker
-          --workers 3
-          --worker-connections 1000
-          --bind 0.0.0.0:8000 
-          --timeout 15
-          --keep-alive 2
-          --max-requests 1000
-          --max-requests-jitter 100
+    command: python manage.py runserver 0.0.0.0:8000
 
   celery:
     build: .
@@ -38,15 +42,12 @@ services:
     env_file:
       - .env
     environment:
-      DJANGO_SETTINGS_MODULE: Hayari.settings.production
+      DJANGO_SETTINGS_MODULE: Hayari.settings.local
     volumes:
       - .:/app
     depends_on:
+      - db
       - redis
-    networks:
-      - hayari-network
-    extra_hosts:
-      - "host.docker.internal:172.17.0.1"
 
   celery-beat:
     build: .
@@ -55,35 +56,12 @@ services:
     env_file:
       - .env
     environment:
-      DJANGO_SETTINGS_MODULE: Hayari.settings.production
+      DJANGO_SETTINGS_MODULE: Hayari.settings.local
     volumes:
       - .:/app
-    networks:
-      - hayari-network
     depends_on:
+      - db
       - redis
 
-
-  redis:
-    image: redis:7.2-alpine
-    container_name: hayari-redis
-    restart: unless-stopped
-    volumes:
-      - redis-data:/data
-    networks:
-      - hayari-network
-    command: >
-      redis-server
-      --appendonly yes
-      --maxmemory 512mb
-      --maxmemory-policy allkeys-lru
-
-networks:
-  hayari-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.28.0.0/16
-
 volumes:
-  redis-data: # for test
+  postgres_data:

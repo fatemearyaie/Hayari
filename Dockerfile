@@ -1,13 +1,13 @@
-FROM python:3.12-bullseye
+FROM mirror-docker.runflare.com/library/python:3.12-bullseye
 
-RUN apt-get update && apt-get install -y postgresql-client
+RUN echo "deb http://mirror.mobinhost.com/debian/ bullseye main contrib non-free" > /etc/apt/sources.list && \
+    apt-get update && apt-get install -y postgresql-client
 
 WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt 
+RUN pip install -i https://mirror-pypi.runflare.com/simple -r requirements.txt
 
 COPY . .
 
