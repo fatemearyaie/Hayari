@@ -32,4 +32,4 @@ db.sqlite3
 logs/
 
 *.json
-hayari-firebase.json
+Hayari/hayari-firebase.json
