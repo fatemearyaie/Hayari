@@ -16,7 +16,7 @@ services:
     build:
       context: .
       args:
-        DJANGO_SETTINGS_MODULE: Hayari.settings.local
+        DJANGO_SETTINGS_MODULE: Hayari.settings.production
     volumes:
       - ./:/app
     container_name: hayari-django
@@ -25,7 +25,7 @@ services:
     env_file:
       - .env
     environment:
-      - DJANGO_SETTINGS_MODULE=Hayari.settings.local
+      - DJANGO_SETTINGS_MODULE=Hayari.settings.production
       - RUN_MIGRATIONS=1
     depends_on:
       - db
@@ -39,7 +39,7 @@ services:
     env_file:
       - .env
     environment:
-      DJANGO_SETTINGS_MODULE: Hayari.settings.local
+      DJANGO_SETTINGS_MODULE: Hayari.settings.production
     volumes:
       - .:/app
     depends_on:
@@ -53,7 +53,7 @@ services:
     env_file:
       - .env
     environment:
-      DJANGO_SETTINGS_MODULE: Hayari.settings.local
+      DJANGO_SETTINGS_MODULE: Hayari.settings.production
     volumes:
       - .:/app
     depends_on:
