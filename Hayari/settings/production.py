@@ -5,7 +5,7 @@ from corsheaders.defaults import default_headers
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
-ALLOWED_HOSTS=['84.200.24.159','api.hayari.app','hayari.app','localhost','127.0.0.1','0.0.0.0']
+ALLOWED_HOSTS=['84.200.80.115','api.hayari.app','hayari.app','localhost','127.0.0.1','0.0.0.0']
 
 
 DEBUG = config("DEBUG")
