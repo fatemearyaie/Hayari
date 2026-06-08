@@ -14,8 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # --- Firebase initialization (common) ---
-FIREBASE_SERVICE_ACCOUNT_PATH = os.path.join(BASE_DIR, 'core/hayari-firebase.json')
-# Firebase initialization will be handled in environment-specific settings
+FIREBASE_SERVICE_ACCOUNT_PATH = os.path.join(BASE_DIR, 'hayari-firebase.json')
+# Firebase initialization will be handled in environmen-specific settings
 if not firebase_admin._apps:
     cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_PATH)
     firebase_admin.initialize_app(cred)
