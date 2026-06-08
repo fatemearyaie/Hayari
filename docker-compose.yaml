@@ -7,19 +7,14 @@ services:
       - postgres_data:/var/lib/postgresql/data
     container_name: hayari-db
 
-  redis:
-    image: redis:7
-    container_name: hayri-redis
-
-
-  hayari:
+  django:
     build:
       context: .
       args:
         DJANGO_SETTINGS_MODULE: Hayari.settings.production
+    container_name: hayari
     volumes:
       - ./:/app
-    container_name: hayari-django
     ports:
       - "49327:8000"
     env_file:
@@ -30,7 +25,18 @@ services:
     depends_on:
       - db
       - redis
-    command: python manage.py runserver 0.0.0.0:8000
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+    command: >
+      gunicorn Hayari.asgi:application
+          -k uvicorn.workers.UvicornWorker
+          --workers 3
+          --worker-connections 1000
+          --bind 0.0.0.0:8000
+          --timeout 15
+          --keep-alive 2
+          --max-requests 1000
+          --max-requests-jitter 100
 
   celery:
     build: .
@@ -45,6 +51,8 @@ services:
     depends_on:
       - db
       - redis
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
 
   celery-beat:
     build: .
@@ -60,5 +68,18 @@ services:
       - db
       - redis
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: hayari-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+
 volumes:
   postgres_data:
+  redis-data:
