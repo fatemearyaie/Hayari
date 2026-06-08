@@ -5,15 +5,12 @@ services:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     container_name: hayari-db
 
   redis:
     image: redis:7
     container_name: hayri-redis
-    ports:
-      - "6379:6379"
+
 
   hayari:
     build:
