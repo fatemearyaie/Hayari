@@ -14,7 +14,7 @@ from Ads.services.video_duration import (
 class AdSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdSetting
-        fields = ['video_price','video_xp','banner_price','banner_xp','is_available']
+        fields = ['video_price_30','video_price_60','video_price_90','video_price_120','video_xp','banner_price','banner_xp','is_available']
 
 class AdCategorySerializer(serializers.ModelSerializer):
     class Meta:
