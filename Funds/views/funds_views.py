@@ -58,46 +58,30 @@ def get_target_user_by_pk(request, pk):
 class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_scope = "custom"
     permission_classes = [IsAuthenticated]
-
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ["amount", "datetime"]
-    ordering_fields = ["datetime", "amount"]
-    ordering = ["-datetime"]
-
     serializer_class = MyDonoationSerializer
 
-    def list(self, request, *args, **kwargs):
-        target_user = request.user
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path=r"fundraising/(?P<fundraising_id>[^/.]+)/donors"
+    )
+    def fundraising_donors(self, request, fundraising_id=None):
+        fundraising = get_object_or_404(FundRaising, pk=fundraising_id)
 
         qs = (
             Donor.objects
-            .filter(user=target_user)
-            .select_related("fundraising")
+            .filter(fundraising=fundraising)
+            .select_related("user", "fundraising")
             .order_by("-datetime")
         )
 
         page = self.paginate_queryset(qs)
         if page is not None:
-            return self.get_paginated_response(self.serializer_class(page, many=True).data)
+            serializer = DonorSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
-        return Response(self.serializer_class(qs, many=True).data)
-
-    def retrieve(self, request, pk=None, *args, **kwargs):
-        target_user = get_target_user_by_pk(request, pk)
-
-        qs = (
-            Donor.objects
-            .filter(user=target_user)
-            .select_related("fundraising")
-            .order_by("-datetime")
-        )
-
-        page = self.paginate_queryset(qs)
-        if page is not None:
-            return self.get_paginated_response(self.serializer_class(page, many=True).data)
-
-        return Response(self.serializer_class(qs, many=True).data)
-
+        serializer = DonorSerializer(qs, many=True)
+        return Response(serializer.data)
 
 class MyDonationAnayticsView(viewsets.ViewSet):
     throttle_scope = "custom"
