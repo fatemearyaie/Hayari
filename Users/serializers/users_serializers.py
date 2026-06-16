@@ -107,7 +107,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class OtherUserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['name','image','description']
+        fields = ['id','name','image','description']
 
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
