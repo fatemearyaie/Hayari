@@ -54,11 +54,32 @@ def get_target_user_by_pk(request, pk):
 
     return get_object_or_404(CustomUser, pk=pk)
 
-
 class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_scope = "custom"
     permission_classes = [IsAuthenticated]
     serializer_class = MyDonoationSerializer
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path=r"fundraising/(?P<fundraising_id>[^/.]+)/donate"
+    )
+    def donate(self, request, fundraising_id=None):
+        serializer = DonateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        amount = serializer.validated_data["amount"]
+
+        donor = donate_fundraising(
+            user=request.user,
+            fundraising_id=fundraising_id,
+            amount=amount,
+        )
+
+        return Response(
+            DonorSerializer(donor).data,
+            status=status.HTTP_201_CREATED
+        )
 
     @action(
         detail=False,
@@ -82,7 +103,7 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
 
         serializer = DonorSerializer(qs, many=True)
         return Response(serializer.data)
-
+    
 class MyDonationAnayticsView(viewsets.ViewSet):
     throttle_scope = "custom"
     permission_classes = [IsAuthenticated]
