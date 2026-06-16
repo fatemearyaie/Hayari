@@ -59,6 +59,14 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = MyDonoationSerializer
 
+    def get_queryset(self):
+        return (
+            Donor.objects
+            .filter(user=self.request.user)
+            .select_related("fundraising", "user")
+            .order_by("-datetime")
+        )
+
     @action(
         detail=False,
         methods=["post"],
@@ -103,7 +111,30 @@ class DonateGV(mixins.ListModelMixin, viewsets.GenericViewSet):
 
         serializer = DonorSerializer(qs, many=True)
         return Response(serializer.data)
-    
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path=r"user/(?P<user_id>[^/.]+)/donations"
+    )
+    def user_donations(self, request, user_id=None):
+        user = get_object_or_404(CustomUser, pk=user_id)
+
+        qs = (
+            Donor.objects
+            .filter(user=user)
+            .select_related("fundraising", "user")
+            .order_by("-datetime")
+        )
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = MyDonoationSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = MyDonoationSerializer(qs, many=True)
+        return Response(serializer.data)
+
 class MyDonationAnayticsView(viewsets.ViewSet):
     throttle_scope = "custom"
     permission_classes = [IsAuthenticated]
