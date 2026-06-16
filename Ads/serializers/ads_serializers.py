@@ -22,7 +22,6 @@ class AdCategorySerializer(serializers.ModelSerializer):
         fields = ['name','id']
 
 
-
 class CreateAdvertisementSerializer(serializers.ModelSerializer):
     city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all())
     category = serializers.PrimaryKeyRelatedField(queryset=AdCategory.objects.all())
@@ -36,10 +35,13 @@ class CreateAdvertisementSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         image = attrs.get('image')
         video = attrs.get('video')
-        setting = AdSetting.objects.get(is_available=True)
+        setting = AdSetting.objects.filter(is_available=True).first()
 
         if not request or not request.user.is_authenticated:
             raise serializers.ValidationError({'اخطار': 'احراز هویت کنید.'})
+
+        if not setting:
+            raise serializers.ValidationError({"تنظیمات": "تنظیمات تبلیغات تعریف نشده است."})
 
         if not image and not video:
             raise serializers.ValidationError({'فایل': 'فایل تصویر یا ویدیو ارسال کنید.'})
@@ -49,10 +51,6 @@ class CreateAdvertisementSerializer(serializers.ModelSerializer):
 
         if image:
             image_price = setting.banner_price
-            if request.user.balance < image_price:
-                raise serializers.ValidationError({
-                    'موجودی': 'موجودی شما برای تبلیغ تصویری کافی نیست.'
-                })
 
             attrs["calculated_price"] = image_price
             attrs["ad_type"] = "image"
@@ -64,15 +62,11 @@ class CreateAdvertisementSerializer(serializers.ModelSerializer):
             except VideoDurationError as e:
                 raise serializers.ValidationError({"ویدیو": str(e)})
 
-            settings = AdSetting.objects.get(is_available=True)
-            if not settings:
-                raise serializers.ValidationError({"تنظیمات": "تنظیمات تبلیغات تعریف نشده است."})
-
             price_map = {
-                30: settings.video_price_30,
-                60: settings.video_price_60,
-                90: settings.video_price_90,
-                120: settings.video_price_120,
+                30: setting.video_price_30,
+                60: setting.video_price_60,
+                90: setting.video_price_90,
+                120: setting.video_price_120,
             }
 
             video_price = price_map.get(bucket)
@@ -80,43 +74,45 @@ class CreateAdvertisementSerializer(serializers.ModelSerializer):
             if video_price is None:
                 raise serializers.ValidationError({"ویدیو": "قیمت این نوع ویدیو تنظیم نشده است."})
 
-            if request.user.balance < video_price:
-                raise serializers.ValidationError({
-                    "موجودی": f"موجودی برای تبلیغ ویدیویی {bucket} ثانیه کافی نیست."
-                })
-
             attrs["calculated_price"] = video_price
             attrs["ad_type"] = "video"
             attrs["video_bucket"] = bucket
             attrs["video_seconds"] = seconds
 
         return attrs
+
+
     def create(self, validated_data):
         request = self.context.get('request')
-        user = request.user
 
         price = validated_data.pop("calculated_price")
-        validated_data.pop("ad_type")
+        validated_data.pop("ad_type", None)
         validated_data.pop("video_bucket", None)
         validated_data.pop("video_seconds", None)
 
-        validated_data['user'] = user
-
         with transaction.atomic():
-            if price:
-                user.balance = F('balance') - price
-                user.save(update_fields=['balance'])
-                user.refresh_from_db()
+            user = CustomUser.objects.select_for_update().get(id=request.user.id)
 
-                Transaction.objects.create(
-                    user=user,
-                    transaction_type=Transaction.TransactionType.Withdraw,
-                    transaction_status=Transaction.TransactionStatus.COMPLETE,
-                    payment_gateway=Transaction.PaymentGateWay.app,
-                    description="هزینه ساخت تبلیغ",
-                    amount=price,
-                    balance_after=user.balance
-                )
+            if user.balance < price:
+                raise serializers.ValidationError({
+                    "موجودی": "موجودی شما برای ساخت این تبلیغ کافی نیست."
+                })
+
+            validated_data['user'] = user
+
+            user.balance = F('balance') - price
+            user.save(update_fields=['balance'])
+            user.refresh_from_db(fields=['balance'])
+
+            Transaction.objects.create(
+                user=user,
+                transaction_type=Transaction.TransactionType.Withdraw,
+                transaction_status=Transaction.TransactionStatus.COMPLETE,
+                payment_gateway=Transaction.PaymentGateWay.app,
+                description="هزینه ساخت تبلیغ",
+                amount=price,
+                balance_after=user.balance
+            )
 
             ad = super().create(validated_data)
 
