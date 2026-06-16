@@ -74,10 +74,7 @@ class Advertisement(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
-    def save(self, *args, **kwargs):
-        if not self.event_date:
-            self.event_date = timezone.localdate()
-        super().save(*args, **kwargs)
+
 
     class Meta:
         verbose_name = 'Advertisement'
