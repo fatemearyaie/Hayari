@@ -10,6 +10,7 @@ from Ads.services.video_duration import (
     get_duration_bucket,
     VideoDurationError,
 )
+from Users.models.users_models import CustomUser
 
 class AdSettingSerializer(serializers.ModelSerializer):
     class Meta:
