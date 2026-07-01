@@ -1,19 +1,20 @@
-# tasks.py
+import random
+
 from celery import shared_task
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
-import random
-from Notification.models.notification_models import UserFCMToken
-from .models import Lottery, LotteryRewards
-from Users.models import CustomUser
+
+from Notification.models.notification_models import UserFCMToken, UserNotification
 from Notification.tasks import send_firebase_task
+from Users.models import CustomUser
+
+from .models import Lottery, LotteryRewards
+
 
 @shared_task
 def run_active_lottery():
     with transaction.atomic():
-        # 1) only allow one active lottery at a time.
-        # Lock the active lottery row to prevent concurrent execution
         lottery = (
             Lottery.objects
             .select_for_update()
@@ -23,85 +24,110 @@ def run_active_lottery():
         )
 
         if not lottery:
-            return
+            return {"status": "no_active_lottery"}
 
-        # 2) If the draw time has not arrived yet do nothing
         if timezone.now() < lottery.lottery_datetime:
-            return
+            return {"status": "lottery_time_not_reached"}
 
-        # 3) Fetch predefined rewards created by the admin
-        # Lock reward rows to avoid race conditions
         rewards = list(
             LotteryRewards.objects
             .select_for_update()
             .filter(lottery=lottery)
             .order_by("place", "id")
         )
+
         if not rewards:
-            # No rewards defined > deactivate the lottery
             lottery.is_active = False
             lottery.save(update_fields=["is_active"])
-            return
+            return {"status": "no_rewards"}
 
-        # 4) Fetch eligible users with their monthly scores
         users = list(
             CustomUser.objects
             .filter(is_active=True, month_score__gt=0)
             .values_list("id", "month_score")
         )
+
         if not users:
-            # No eligible users > deactivate the lottery
             lottery.is_active = False
             lottery.save(update_fields=["is_active"])
-            return
+            return {"status": "no_eligible_users"}
 
-        # Separate user IDs and their weights
-        pool_ids = [u[0] for u in users]
-        pool_w   = [u[1] for u in users]
+        pool_ids = [user_id for user_id, score in users]
+        pool_weights = [score for user_id, score in users]
 
-        # 5) Number of winners equals number of rewards,
-        # but cannot exceed the number of eligible users
-        k = min(len(rewards), len(pool_ids))
+        winners_count = min(len(rewards), len(pool_ids))
 
         winners = []
-        for _ in range(k):
-            # Select one winner using weighted random selection
-            chosen = random.choices(pool_ids, weights=pool_w, k=1)[0]
-            winners.append(chosen)
+        for _ in range(winners_count):
+            winner_id = random.choices(pool_ids, weights=pool_weights, k=1)[0]
+            winners.append(winner_id)
 
-            # Remove the selected user so they cannot win again
-            i = pool_ids.index(chosen)
-            pool_ids.pop(i)
-            pool_w.pop(i)
+            index = pool_ids.index(winner_id)
+            pool_ids.pop(index)
+            pool_weights.pop(index)
 
-        # 6) Assign winners to rewards (place 1 > first winner)
-        for r, uid in zip(rewards, winners):
-            r.user_id = uid
-        LotteryRewards.objects.bulk_update(rewards[:k], ["user"])
+        notifications_payloads = []
+        assigned_rewards = []
 
-        # 7) increase each winner's balance based on rewards
-        for r in rewards[:k]:
-            CustomUser.objects.filter(id=r.user_id).update(
-                balance=F("balance") + r.amount
+        for reward, user_id in zip(rewards, winners):
+            LotteryRewards.objects.filter(id=reward.id).update(user_id=user_id)
+
+            reward.user_id = user_id
+            assigned_rewards.append(reward)
+
+            CustomUser.objects.filter(id=user_id).update(
+                balance=F("balance") + reward.amount
             )
-        # 8) send notification to winners
-        for r in rewards[:k]:
+
+            title = "برنده قرعه‌کشی"
+            description = (
+                f"تبریک! شما رتبه {reward.place} را برنده شدید "
+                f"و مبلغ {int(reward.amount)} به کیف پول شما اضافه شد."
+            )
+
+            UserNotification.objects.create(
+                user_id=user_id,
+                title=title,
+                description=description,
+            )
+
             tokens = list(
                 UserFCMToken.objects
-                .filter(user_id=r.user_id)
+                .filter(user_id=user_id)
                 .values_list("token", flat=True)
             )
 
-            for t in tokens:
-                send_firebase_task.delay({
-                    "fcm": t,
-                    "title": "Lottery Winner!",
-                    "message": f"You won place #{r.place} and received {int(r.amount)}.",
+            for token in tokens:
+                notifications_payloads.append({
+                    "fcm": token,
+                    "title": title,
+                    "message": description,
                     "type": "lottery_win",
                     "lottery_id": lottery.id,
-                    "place": r.place,
-                    "amount": str(r.amount),
+                    "place": reward.place,
+                    "amount": str(reward.amount),
                 })
-        # 9) Deactivate the lottery after the draw is completed
+
         lottery.is_active = False
         lottery.save(update_fields=["is_active"])
+
+        def send_notifications_after_commit():
+            for payload in notifications_payloads:
+                send_firebase_task.delay(payload)
+
+        transaction.on_commit(send_notifications_after_commit)
+
+        return {
+            "status": "done",
+            "lottery_id": lottery.id,
+            "winners": winners,
+            "assigned_rewards": [
+                {
+                    "reward_id": reward.id,
+                    "place": reward.place,
+                    "amount": str(reward.amount),
+                    "user_id": reward.user_id,
+                }
+                for reward in assigned_rewards
+            ],
+        }
