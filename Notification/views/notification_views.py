@@ -6,7 +6,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from Notification.models.notification_models import UserNotification
 from Notification.serializers.notification_serializers import UserNotificationSerializer
+from rest_framework.views import APIView
+from rest_framework import status
 
+from Notification.models.notification_models import UserFCMToken
 
 class UserNotificationViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserNotificationSerializer
@@ -35,3 +38,17 @@ class UserNotificationViewSet(viewsets.ReadOnlyModelViewSet):
         count = UserNotification.objects.filter(user=request.user, is_read=False).count()
         return Response({'خوانده نشده ها': count}, status=status.HTTP_200_OK)
 
+
+
+class RegisterFCMTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        token = request.data.get("token")
+
+        if not token:
+            return Response({"detail": "token is required"},status=status.HTTP_400_BAD_REQUEST,)
+
+        UserFCMToken.objects.update_or_create(token=token,defaults={"user": request.user},)
+
+        return Response({"detail": "FCM token saved successfully"},status=status.HTTP_200_OK,)

@@ -14,9 +14,22 @@ from Lottery.serializers.lottery_serializers import ActiveLotterySerializer, Lot
 # Create your views here.
 class ActiveLotteryView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        queryset = Lottery.objects.prefetch_related('lotteryrewards_set').get(is_active=True)
-        serializer = ActiveLotterySerializer(queryset)
+        lottery = (
+            Lottery.objects
+            .prefetch_related("lotteryrewards_set")
+            .filter(is_active=True)
+            .first()
+        )
+
+        if not lottery:
+            return Response(
+                {"detail": "قرعه‌کشی فعالی وجود ندارد."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = ActiveLotterySerializer(lottery)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class PreviousLotteryWinnersView(ReadOnlyModelViewSet):
