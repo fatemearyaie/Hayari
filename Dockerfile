@@ -1,7 +1,9 @@
 FROM python:3.12-bullseye
 
 RUN echo "deb http://mirror.mobinhost.com/debian/ bullseye main contrib non-free" > /etc/apt/sources.list && \
-    apt-get update && apt-get install -y postgresql-client
+    apt-get update && \
+    apt-get install -y --no-install-recommends postgresql-client ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
