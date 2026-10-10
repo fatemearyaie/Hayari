@@ -9,7 +9,7 @@ BANNER_CACHE_KEY = "banner:active"
 def get_cached_banners():
     data = cache.get(BANNER_CACHE_KEY)
     if data is None:
-        banners = HomeBanner.objects.filter(is_active=True)
+        banners = HomeBanner.objects.all()
         data = HomeBannerSerializer(banners, many=True).data
         cache.set(BANNER_CACHE_KEY, data, BANNER_CACHE_TTL)
     return data
