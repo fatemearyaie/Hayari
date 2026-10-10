@@ -23,6 +23,10 @@ db.sqlite3
 /static/
 /media/
 
+.DS_Store
+
+celerybeat-schedule
+
 
 # Django collectstatic output
 /staticfiles/

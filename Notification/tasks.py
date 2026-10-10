@@ -2,8 +2,7 @@ from celery import shared_task
 from firebase_admin import messaging
 
 from core.firebase import get_firebase_app
-from Notification.models.notification_models import UserFCMToken
-
+from Notification.models.notification_models import UserFCMToken, UserNotification
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=5)
 def send_firebase_task(self, data: dict):

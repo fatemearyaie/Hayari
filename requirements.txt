@@ -28,3 +28,5 @@ ffprobe
 django-location-field
 google-auth
 google-auth-oauthlib
+pytest
+pytest-django
