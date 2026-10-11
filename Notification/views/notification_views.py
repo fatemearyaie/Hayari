@@ -49,6 +49,8 @@ class RegisterFCMTokenView(APIView):
         if not token:
             return Response({"detail": "token is required"},status=status.HTTP_400_BAD_REQUEST,)
 
-        UserFCMToken.objects.update_or_create(token=token,defaults={"user": request.user},)
+        UserFCMToken.objects.filter(token=token).exclude(user=request.user).delete()
+        UserFCMToken.objects.filter(user=request.user).exclude(token=token).delete()
+        UserFCMToken.objects.get_or_create(token=token, user=request.user)
 
         return Response({"detail": "FCM token saved successfully"},status=status.HTTP_200_OK,)
