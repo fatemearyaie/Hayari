@@ -7,3 +7,4 @@ class FundsConfig(AppConfig):
 
     def ready(self):
         import Funds.signals.funds_signals
+        import Funds.signals.cache_signals
